@@ -136,20 +136,77 @@ export default function App(){
     setSaving(false);
   };
 
-  const exportCSV=(t)=>{
+  const exportXLSX=(t)=>{
     const data=t==="rampla"?ramplas:bateas;
     if(!data.length){toast2("Sin datos","err");return;}
+
     const H=t==="rampla"
-      ?["N°","Fecha","Guía","Tracto","Rampla","Conductor","Producto","Origen","Destino","Bruto","Tara","Neto","Paquetes","Rec.Puerto","Lleg.Taller","Viático","Peajes","Consumo","KM","Rendimiento","Equipo","Total","Supervisor","Obs"]
-      :["N°","Fecha","N° Guía","PPU Tracto","PPU Batea","Nombre Conductor","Bruto","Tara","Neto","Diferencia","DIF","N° Ticket","Neto Puerto","Dif. Puerto","Origen","Destino","Peajes","Supervisor que Ingresa","Revisado por"];
+      ?["N°","FECHA","GUIA","TRACTO","RAMPLA","CONDUCTOR","PRODUCTO","ORIGEN","DESTINO","BRUTO","TARA","NETO","PAQUETES","RECEPCION PUERTO","LLEGADA TALLER","VIATICO","PEAJES","CONSUMO GPS","KM RECORRIDOS","RENDIMIENTO (KM/L)","EQUIPO","TOTAL","SUPERVISOR","OBSERVACIONES"]
+      :["N°","FECHA","N° GUIA","PPU TRACTO","PPU BATEA","NOMBRE CONDUCTOR","BRUTO","TARA","NETO","DIFERENCIA","DIF","N° TICKET","NETO PUERTO","DIF. PUERTO","ORIGEN","DESTINO","PEAJES","SUPERVISOR QUE INGRESA","REVISADO POR"];
+
+    const toDate=(excelNum)=>{
+      if(!excelNum)return"";
+      const d=new Date(1899,11,30);d.setDate(d.getDate()+Number(excelNum));
+      return d.toLocaleDateString("es-CL");
+    };
+
     const R=data.map((r,i)=>t==="rampla"
-      ?[i+1,excelToDate(r.fecha),r.guia,r.tracto,r.rampla,r.conductor,r.producto,r.origen,r.destino,r.bruto,r.tara,r.neto,r.paquetes,excelToDate(r.recepcionPuerto),excelToDate(r.llegadaTaller),r.viatico,r.peajes,r.consumo,r.km,r.km&&r.consumo?(r.km/r.consumo).toFixed(2):"",r.equipo,Number(r.viatico||0)+Number(r.peajes||0),r.supervisor,r.obs]
-      :[i+1,excelToDate(r.fecha),r.guia,r.tracto,r.batea,r.conductor,r.bruto,r.tara,r.neto,"",r.dif||0,r.ticket,r.netoPuerto,r.difPuerto||0,r.origen,r.destino,r.peajes,r.supervisor,r.revisadoPor]
+      ?[i+1,toDate(r.fecha),r.guia,r.tracto,r.rampla,r.conductor,r.producto,r.origen,r.destino,
+        Number(r.bruto||0),Number(r.tara||0),Number(r.neto||0),Number(r.paquetes||0),
+        toDate(r.recepcionPuerto),toDate(r.llegadaTaller),
+        Number(r.viatico||0),Number(r.peajes||0),Number(r.consumo||0),Number(r.km||0),
+        r.km&&r.consumo?parseFloat((r.km/r.consumo).toFixed(2)):0,
+        r.equipo,Number(r.viatico||0)+Number(r.peajes||0),r.supervisor,r.obs||""]
+      :[i+1,toDate(r.fecha),r.guia,r.tracto,r.batea,r.conductor,
+        Number(r.bruto||0),Number(r.tara||0),Number(r.neto||0),
+        "","",r.ticket,
+        Number(r.netoPuerto||0),Number(r.difPuerto||0),
+        r.origen,r.destino,Number(r.peajes||0),r.supervisor,r.revisadoPor||""]
     );
-    const csv=[H,...R].map(r=>r.map(c=>`"${String(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));
-    a.download=`INCOM_${t.toUpperCase()}_${periodo.desde}_${periodo.hasta}.csv`;a.click();
+
+    // Construir XLSX usando SheetJS desde CDN
+    const script=document.createElement("script");
+    script.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    script.onload=()=>{
+      const wb=XLSX.utils.book_new();
+      const ws=XLSX.utils.aoa_to_sheet([H,...R]);
+
+      // Ancho de columnas
+      ws["!cols"]=t==="rampla"
+        ?[{wch:4},{wch:12},{wch:10},{wch:9},{wch:9},{wch:28},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:14},{wch:10},{wch:20},{wch:20}]
+        :[{wch:4},{wch:12},{wch:10},{wch:10},{wch:10},{wch:28},{wch:9},{wch:9},{wch:9},{wch:9},{wch:6},{wch:10},{wch:11},{wch:10},{wch:16},{wch:12},{wch:9},{wch:22},{wch:14}];
+
+      // Estilo encabezado (fila 1)
+      const range=XLSX.utils.decode_range(ws["!ref"]);
+      for(let c=range.s.c;c<=range.e.c;c++){
+        const cell=XLSX.utils.encode_cell({r:0,c});
+        if(!ws[cell])continue;
+        ws[cell].s={
+          fill:{fgColor:{rgb:"1A3FA4"}},
+          font:{bold:true,color:{rgb:"FFFFFF"},sz:10},
+          alignment:{horizontal:"center",vertical:"center"},
+          border:{bottom:{style:"medium",color:{rgb:"C0001A"}}}
+        };
+      }
+
+      XLSX.utils.book_append_sheet(wb,ws,t==="rampla"?"RAMPLAS":"BATEAS");
+      XLSX.writeFile(wb,`INCOM_${t.toUpperCase()}_${periodo.desde}_${periodo.hasta}.xlsx`);
+    };
+    if(!window.XLSX){document.head.appendChild(script);}
+    else{
+      const wb=XLSX.utils.book_new();
+      const ws=XLSX.utils.aoa_to_sheet([H,...R]);
+      ws["!cols"]=t==="rampla"
+        ?[{wch:4},{wch:12},{wch:10},{wch:9},{wch:9},{wch:28},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:14},{wch:10},{wch:20},{wch:20}]
+        :[{wch:4},{wch:12},{wch:10},{wch:10},{wch:10},{wch:28},{wch:9},{wch:9},{wch:9},{wch:9},{wch:6},{wch:10},{wch:11},{wch:10},{wch:16},{wch:12},{wch:9},{wch:22},{wch:14}];
+      XLSX.utils.book_append_sheet(wb,ws,t==="rampla"?"RAMPLAS":"BATEAS");
+      XLSX.writeFile(wb,`INCOM_${t.toUpperCase()}_${periodo.desde}_${periodo.hasta}.xlsx`);
+    }
   };
+
+  // Alias para compatibilidad con componentes que usan exportCSV
+  const exportCSV=exportXLSX;
+
 
   const totalNeto=bateas.reduce((s,r)=>s+Number(r.neto||0),0);
   const totalTonPeriodo=bateas.reduce((s,r)=>s+Number(r.neto||0),0);
@@ -507,7 +564,7 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
     <div style={{display:"grid",gap:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🚛 Ramplas — {data.length} guías</div>
-        <button className="btn-s" onClick={()=>exportCSV("rampla")}>↓ Exportar CSV</button>
+        <button className="btn-s" onClick={()=>exportCSV("rampla")}>↓ Exportar XLSX</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
@@ -562,7 +619,7 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
     <div style={{display:"grid",gap:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>⛏ Bateas — {data.length} guías</div>
-        <button className="btn-s" onClick={()=>exportCSV("batea")}>↓ Exportar CSV</button>
+        <button className="btn-s" onClick={()=>exportCSV("batea")}>↓ Exportar XLSX</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
@@ -709,8 +766,8 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
-          <button className="btn-s" onClick={()=>exportCSV("rampla")} style={{fontSize:12}}>↓ CSV Ramplas</button>
-          <button className="btn-s" onClick={()=>exportCSV("batea")} style={{fontSize:12}}>↓ CSV Bateas</button>
+          <button className="btn-s" onClick={()=>exportCSV("rampla")} style={{fontSize:12}}>↓ XLSX Ramplas</button>
+          <button className="btn-s" onClick={()=>exportCSV("batea")} style={{fontSize:12}}>↓ XLSX Bateas</button>
           <button className="btn-s" onClick={()=>window.print()} style={{fontSize:12}}>🖨 PDF</button>
         </div>
       </div>
