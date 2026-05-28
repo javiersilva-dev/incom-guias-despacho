@@ -495,8 +495,6 @@ function TblRamplas({rows,upd,del,cfg}){
   );
 }
 
-function toExcelDate(ds){const d=new Date(ds+"T12:00:00");return Math.floor((d-new Date(1899,11,30))/86400000);}
-
 /* VISTA RAMPLAS */
 function VistaRamplas({data,exportCSV,clp,excelToDate}){
   return(
