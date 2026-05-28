@@ -30,7 +30,8 @@ const DATOS_INICIALES_BATEAS = [
 
 const DEFAULT_CONFIG = {
   peajeRampla:41600, viatico:50000, peajeBatea:13800,
-  conductores:["BRAYAN GUEVARA ALBORNOZ","DANIEL VEGA PEREIRA","ROBERTO FAJARDO SALINAS","CRISTIAN LANAS DIAZ","CRISTIAN OLIVARES ROJAS","LUIS MADARIAGA ALCOTA","JUAN VALENZUELA CASTRO","UBER ZAMORA MONARDES","RENE PAEZ REBOLLEDO","JOSE GONZALEZ GUEVARA","ABELINO CARRIZO VALLEJO","FRANCISCO HANSHING VEGA","RICARDO CONTRERAS PAEZ","JAVIER SANCHEZ SAAVEDRA","LUIS MUÑOZ ALMONACID","FELIPE CORTES ZEPEDA","JAVIER CORTES BRUNA","RICARDO RAMIREZ MIRANDA","EDUARDO LEDESMA LEDESMA","MARCO QUIROGA ESQUIVEL","ORLANDO BUGUEÑO RIVERA","ENRIQUE ROJAS GARCIA","BORIS ROJAS FLORES","PEDRO ARRIAGADA TAPIA","PEDRO SAEZ GONZALEZ","ALBERTO ASTORGA MONTAÑA","DAMM CRUZ GARRIDO","ROLANDO GUZMAN ACUÑA","JUAN MUÑOZ TIMBLE","WILFRIDO OLIVARES LEON","MARCO RIQUELME INOSTROZA","JOSE URIZAR ESCOBAR"],
+  conductoresBatea:["BRAYAN GUEVARA ALBORNOZ","DANIEL VEGA PEREIRA","ROBERTO FAJARDO SALINAS","CRISTIAN LANAS DIAZ","CRISTIAN OLIVARES ROJAS","LUIS MADARIAGA ALCOTA","JUAN VALENZUELA CASTRO","UBER ZAMORA MONARDES","RENE PAEZ REBOLLEDO","JOSE GONZALEZ GUEVARA","ABELINO CARRIZO VALLEJO","FRANCISCO HANSHING VEGA","RICARDO CONTRERAS PAEZ","JAVIER SANCHEZ SAAVEDRA","LUIS MUÑOZ ALMONACID","FELIPE CORTES ZEPEDA","JAVIER CORTES BRUNA","RICARDO RAMIREZ MIRANDA","EDUARDO LEDESMA LEDESMA","MARCO QUIROGA ESQUIVEL","ORLANDO BUGUEÑO RIVERA","ENRIQUE ROJAS GARCIA","BORIS ROJAS FLORES","PEDRO ARRIAGADA TAPIA","PEDRO SAEZ GONZALEZ","ALBERTO ASTORGA MONTAÑA","DAMM CRUZ GARRIDO","ROLANDO GUZMAN ACUÑA","JUAN MUÑOZ TIMBLE","WILFRIDO OLIVARES LEON","MARCO RIQUELME INOSTROZA","JOSE URIZAR ESCOBAR"],
+  conductoresRampla:["BRAYAN GUEVARA ALBORNOZ","DANIEL VEGA PEREIRA","ROBERTO FAJARDO SALINAS","CRISTIAN LANAS DIAZ","CRISTIAN OLIVARES ROJAS","LUIS MADARIAGA ALCOTA","JUAN VALENZUELA CASTRO","UBER ZAMORA MONARDES","RENE PAEZ REBOLLEDO","JOSE GONZALEZ GUEVARA","ABELINO CARRIZO VALLEJO","FRANCISCO HANSHING VEGA","RICARDO CONTRERAS PAEZ","JAVIER SANCHEZ SAAVEDRA","LUIS MUÑOZ ALMONACID","FELIPE CORTES ZEPEDA","JAVIER CORTES BRUNA","RICARDO RAMIREZ MIRANDA","EDUARDO LEDESMA LEDESMA","MARCO QUIROGA ESQUIVEL","ORLANDO BUGUEÑO RIVERA","ENRIQUE ROJAS GARCIA","BORIS ROJAS FLORES","PEDRO ARRIAGADA TAPIA","PEDRO SAEZ GONZALEZ","ALBERTO ASTORGA MONTAÑA","DAMM CRUZ GARRIDO","ROLANDO GUZMAN ACUÑA","JUAN MUÑOZ TIMBLE","WILFRIDO OLIVARES LEON","MARCO RIQUELME INOSTROZA","JOSE URIZAR ESCOBAR"],
   tractosRampla:["SPSH74","SSHY46","RJBV35","RVFF14","RJBV34","RVFF13","RTRJ40"],
   ramplas:["PWXW81","PWVW82","PWVW57","PWVW58","PWVW56","PWVX89","PWVX90"],
   tractosBatea:["PJFD83","LXXL81","RVFK45","RTRJ40","PJFD76","RVXC10","PJFD98","PJBP95","RVXB98","RVFK46","PPPW79","RVFK47","LRVV85","SYPL10","PJFD81","SHLL37","RKGC82","LRVV86","SSHY46","PPPW78","PJBP94","RVFF13","RVXB98","RVXC10"],
@@ -154,36 +155,36 @@ export default function App(){
   const totalTonPeriodo=bateas.reduce((s,r)=>s+Number(r.neto||0),0);
 
   return(
-    <div style={{minHeight:"100vh",background:"#f0f2f5",fontFamily:"'Inter','Segoe UI',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"#f2f4f8",fontFamily:"'Inter','Segoe UI',sans-serif"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:5px;height:5px;}
-        ::-webkit-scrollbar-track{background:#f0f2f5;}
+        ::-webkit-scrollbar-track{background:#f2f4f8;}
         ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
-        body{background:#f0f2f5;}
+        body{background:#f2f4f8;}
 
         /* INPUTS */
         .fi{width:100%;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;color:#1e293b;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border 0.15s,box-shadow 0.15s;}
-        .fi:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.12);}
+        .fi:focus{border-color:#1a3fa4;box-shadow:0 0 0 3px rgba(26,63,164,0.10);}
         .fi::placeholder{color:#94a3b8;}
         select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;appearance:none;padding-right:28px;}
 
         /* CELDAS TABLA */
         .ci{width:100%;background:#fff;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1e293b;font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;outline:none;height:32px;}
-        .ci:focus{background:#eff6ff;border-bottom:2px solid #6366f1;z-index:1;position:relative;}
+        .ci:focus{background:#e6ebf7;border-bottom:2px solid #1a3fa4;z-index:1;position:relative;}
         .ci-sel{width:100%;background:#fff;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1e293b;font-family:'Inter',sans-serif;font-size:12px;height:32px;padding:0 6px;outline:none;cursor:pointer;appearance:none;}
-        .ci-sel:focus{background:#eff6ff;border-bottom:2px solid #6366f1;}
-        .ci-ro{width:100%;background:#f8fafc;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#6366f1;font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;height:32px;font-weight:600;text-align:right;display:flex;align-items:center;justify-content:flex-end;}
+        .ci-sel:focus{background:#e6ebf7;border-bottom:2px solid #1a3fa4;}
+        .ci-ro{width:100%;background:#f8fafc;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1a3fa4;font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;height:32px;font-weight:600;text-align:right;display:flex;align-items:center;justify-content:flex-end;}
         .ci-num{text-align:right;}
         .tr-e:hover .ci,.tr-e:hover .ci-sel,.tr-e:hover .ci-ro{background:#fafbff;}
 
         /* BOTONES */
-        .btn-p{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;box-shadow:0 2px 8px rgba(99,102,241,0.3);}
-        .btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(99,102,241,0.4);}
+        .btn-p{background:linear-gradient(135deg,#1a3fa4,#1a3fa4);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;box-shadow:0 2px 8px rgba(26,63,164,0.25);}
+        .btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,63,164,0.35);}
         .btn-p:disabled{background:#94a3b8;cursor:not-allowed;transform:none;box-shadow:none;}
         .btn-s{background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;color:#64748b;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
-        .btn-s:hover{border-color:#6366f1;color:#6366f1;background:#f5f3ff;}
+        .btn-s:hover{border-color:#1a3fa4;color:#1a3fa4;background:#f5f3ff;}
         .btn-d{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:16px;line-height:1;transition:color 0.15s;padding:0 4px;}
         .btn-d:hover{color:#ef4444;}
 
@@ -201,12 +202,12 @@ export default function App(){
         .tab-bar{display:flex;gap:4px;background:#fff;border-radius:16px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
         .tab-btn{background:none;border:none;border-radius:10px;color:#94a3b8;cursor:pointer;padding:10px 18px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:7px;}
         .tab-btn:hover{color:#1e293b;background:#f8fafc;}
-        .tab-btn.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.3);}
+        .tab-btn.active{background:linear-gradient(135deg,#1a3fa4,#1a3fa4);color:#fff;box-shadow:0 2px 8px rgba(26,63,164,0.25);}
 
         /* TIPO PILL */
         .pill{background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;color:#64748b;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
-        .pill.a-r{background:#eff6ff;border-color:#6366f1;color:#6366f1;}
-        .pill.a-b{background:#fdf4ff;border-color:#8b5cf6;color:#8b5cf6;}
+        .pill.a-r{background:#e6ebf7;border-color:#1a3fa4;color:#1a3fa4;}
+        .pill.a-b{background:#fce8eb;border-color:#1a3fa4;color:#1a3fa4;}
 
         /* TABLA PRINCIPAL */
         .tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:500px;border-radius:12px;border:1px solid #e2e8f0;}
@@ -222,8 +223,8 @@ export default function App(){
 
         /* BADGE */
         .badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-        .badge-b{background:#fdf4ff;color:#8b5cf6;}
-        .badge-r{background:#eff6ff;color:#6366f1;}
+        .badge-b{background:#fce8eb;color:#1a3fa4;}
+        .badge-r{background:#e6ebf7;color:#1a3fa4;}
 
         /* TOAST */
         .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;font-family:'Inter',sans-serif;animation:up 0.25s ease;box-shadow:0 8px 24px rgba(0,0,0,0.12);}
@@ -232,7 +233,7 @@ export default function App(){
         @keyframes up{from{opacity:0;transform:translateX(-50%) translateY(12px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
         /* HEADER */
-        .hdr{background:#fff;box-shadow:0 1px 0 #e2e8f0;padding:0 28px;position:sticky;top:0;z-index:10;}
+        .hdr{background:#fff;box-shadow:0 1px 0 #e2e8f0,0 3px 0 #c0001a;padding:0 28px;position:sticky;top:0;z-index:10;}
         .section-lbl{font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
         .tag-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#475569;}
         .tag-item button{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:13px;line-height:1;}
@@ -246,10 +247,14 @@ export default function App(){
       <div className="hdr">
         <div style={{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:20,padding:"14px 0"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:38,height:38,borderRadius:10,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,boxShadow:"0 2px 8px rgba(99,102,241,0.3)"}}>📋</div>
-            <div>
-              <div style={{fontSize:15,fontWeight:700,color:"#1e293b",letterSpacing:"-0.3px"}}>Control Guías de Despacho</div>
-              <div style={{fontSize:11,color:"#94a3b8",fontWeight:500,marginTop:1}}>INCOM · Período {periodo.desde} → {periodo.hasta}</div>
+            <svg height="36" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="4" width="58" height="52" rx="8" fill="none" stroke="#c0001a" strokeWidth="4"/>
+              <text x="31" y="42" textAnchor="middle" fontFamily="Arial Black,Arial" fontWeight="900" fontSize="38" fill="#1a3fa4">IN</text>
+              <text x="130" y="48" textAnchor="middle" fontFamily="Arial Black,Arial" fontWeight="900" fontSize="46" fill="#1a3fa4">COM</text>
+            </svg>
+            <div style={{borderLeft:"1.5px solid #e2e8f0",paddingLeft:14,marginLeft:4}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#1e293b",letterSpacing:"-0.2px"}}>Control Guías de Despacho</div>
+              <div style={{fontSize:11,color:"#94a3b8",fontWeight:500,marginTop:1}}>Período {periodo.desde} → {periodo.hasta}</div>
             </div>
           </div>
           <div style={{flex:1,display:"flex",justifyContent:"center"}}>
@@ -308,7 +313,7 @@ export default function App(){
               </div>
               {rows.length>0&&(
                 <div style={{marginTop:10,fontSize:12,color:"#94a3b8"}}>
-                  <span style={{background:"#f0f9ff",color:"#0369a1",padding:"3px 10px",borderRadius:6,fontWeight:500}}>
+                  <span style={{background:"#e6ebf7",color:"#0369a1",padding:"3px 10px",borderRadius:6,fontWeight:500}}>
                     Tab → avanzar celda &nbsp;·&nbsp; Enter → bajar fila &nbsp;·&nbsp; 🟣 campos calculados automáticamente
                   </span>
                 </div>
@@ -325,8 +330,8 @@ export default function App(){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#f8fafc",borderTop:"1px solid #e2e8f0"}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#475569"}}>
                     {tipo==="batea"
-                      ?<>Total neto: <span style={{color:"#8b5cf6"}}>{rows.reduce((s,r)=>s+Number(r.neto||0),0).toFixed(2)} t</span></>
-                      :<>Total viáticos+peajes: <span style={{color:"#6366f1"}}>{clp(rows.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0))}</span></>
+                      ?<>Total neto: <span style={{color:"#1a3fa4"}}>{rows.reduce((s,r)=>s+Number(r.neto||0),0).toFixed(2)} t</span></>
+                      :<>Total viáticos+peajes: <span style={{color:"#1a3fa4"}}>{clp(rows.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0))}</span></>
                     }
                   </div>
                   <button className="btn-p" onClick={guardar} disabled={saving}>
@@ -340,15 +345,16 @@ export default function App(){
             {rows.length===0&&(
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16}}>
                 {[
-                  {lbl:"Vueltas período",val:ramplas.length,col:"#6366f1",bg:"#eff6ff",ic:"🚛"},
-                  {lbl:"Tonelaje período",val:totalTonPeriodo.toFixed(1)+" t",col:"#8b5cf6",bg:"#fdf4ff",ic:"⚖️"},
-                  {lbl:"Guías rampla",val:ramplas.length,col:"#0284c7",bg:"#f0f9ff",ic:"📄"},
-                  {lbl:"Guías batea",val:bateas.length,col:"#7c3aed",bg:"#faf5ff",ic:"📋"},
-                ].map(({lbl,val,col,bg,ic})=>(
+                  {lbl:"Vueltas rampla",sub:ramplas.length===1?"1 vuelta":ramplas.length+" vueltas",val:ramplas.length,col:"#1a3fa4",bg:"#e6ebf7",ic:"🚛"},
+                  {lbl:"Tonelaje batea",sub:bateas.length+" viajes · "+totalTonPeriodo.toFixed(1)+" t",val:totalTonPeriodo.toFixed(1)+" t",col:"#1a3fa4",bg:"#fce8eb",ic:"⚖️"},
+                  {lbl:"Guías rampla período",sub:"contrato cátodos/molibdeno",val:ramplas.length,col:"#0284c7",bg:"#e6ebf7",ic:"📄"},
+                  {lbl:"Guías batea período",sub:"contrato concentrado",val:bateas.length,col:"#c0001a",bg:"#fce8eb",ic:"📋"},
+                ].map(({lbl,sub,val,col,bg,ic})=>(
                   <div key={lbl} className="mc">
                     <div className="mc-icon" style={{background:bg}}>{ic}</div>
                     <div className="mc-lbl">{lbl}</div>
                     <div className="mc-val" style={{color:col}}>{val}</div>
+                    {sub&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{sub}</div>}
                   </div>
                 ))}
               </div>
@@ -383,7 +389,7 @@ function TblBateas({rows,upd,del,cfg}){
     {k:"guia",      l:"N° Guía",    w:85,  t:"txt"},
     {k:"tracto",    l:"PPU Tracto", w:100, t:"sel",o:()=>cfg.tractosBatea},
     {k:"batea",     l:"PPU Batea",  w:100, t:"sel",o:()=>cfg.bateas},
-    {k:"conductor", l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductores},
+    {k:"conductor", l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductoresBatea},
     {k:"bruto",     l:"Bruto (t)",  w:80,  t:"num"},
     {k:"tara",      l:"Tara (t)",   w:75,  t:"num"},
     {k:"neto",      l:"Neto (t)",   w:75,  t:"ro"},
@@ -439,7 +445,7 @@ function TblRamplas({rows,upd,del,cfg}){
     {k:"guia",           l:"N° Guía",    w:85,  t:"txt"},
     {k:"tracto",         l:"Tracto",     w:90,  t:"sel",o:()=>cfg.tractosRampla},
     {k:"rampla",         l:"Rampla",     w:90,  t:"sel",o:()=>cfg.ramplas},
-    {k:"conductor",      l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductores},
+    {k:"conductor",      l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductoresRampla},
     {k:"bruto",          l:"Bruto (kg)", w:85,  t:"num"},
     {k:"tara",           l:"Tara (kg)",  w:80,  t:"num"},
     {k:"neto",           l:"Neto (kg)",  w:80,  t:"ro"},
@@ -505,10 +511,10 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
-          {l:"Vueltas",v:data.length,c:"#6366f1",bg:"#eff6ff"},
-          {l:"Viáticos",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#8b5cf6",bg:"#fdf4ff"},
-          {l:"Peajes",v:clp(data.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#0284c7",bg:"#f0f9ff"},
-          {l:"Total General",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0)),c:"#6366f1",bg:"#eff6ff"},
+          {l:"Vueltas",v:data.length,c:"#1a3fa4",bg:"#e6ebf7"},
+          {l:"Viáticos",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#1a3fa4",bg:"#fce8eb"},
+          {l:"Peajes",v:clp(data.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#0284c7",bg:"#e6ebf7"},
+          {l:"Total General",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0)),c:"#1a3fa4",bg:"#e6ebf7"},
         ].map(({l,v,c,bg})=>(
           <div key={l} className="mc">
             <div className="mc-lbl">{l}</div>
@@ -525,7 +531,7 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
                 <tr key={i}>
                   <td style={{color:"#94a3b8",fontWeight:500}}>{i+1}</td>
                   <td>{excelToDate(r.fecha)}</td>
-                  <td style={{color:"#6366f1",fontWeight:600}}>{r.guia}</td>
+                  <td style={{color:"#1a3fa4",fontWeight:600}}>{r.guia}</td>
                   <td>{r.tracto}</td><td>{r.rampla}</td>
                   <td style={{color:"#1e293b",fontWeight:500}}>{r.conductor}</td>
                   <td style={{textAlign:"center"}}>{r.paquetes}</td>
@@ -534,7 +540,7 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
                   <td style={{textAlign:"right",fontWeight:600,color:"#1e293b"}}>{Number(r.neto||0).toLocaleString("es-CL")}</td>
                   <td style={{textAlign:"right"}}>{clp(r.viatico)}</td>
                   <td style={{textAlign:"right"}}>{clp(r.peajes)}</td>
-                  <td style={{textAlign:"right",fontWeight:700,color:"#6366f1"}}>{clp(Number(r.viatico||0)+Number(r.peajes||0))}</td>
+                  <td style={{textAlign:"right",fontWeight:700,color:"#1a3fa4"}}>{clp(Number(r.viatico||0)+Number(r.peajes||0))}</td>
                   <td style={{textAlign:"right"}}>{r.km}</td>
                   <td>{r.equipo}</td>
                   <td style={{color:"#94a3b8"}}>{r.supervisor}</td>
@@ -560,9 +566,9 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
-          {l:"Total viajes",v:data.length,c:"#8b5cf6",bg:"#fdf4ff"},
-          {l:"Tonelaje neto",v:totalNeto.toFixed(2)+" t",c:"#7c3aed",bg:"#faf5ff"},
-          {l:"Prom / viaje",v:data.length?(totalNeto/data.length).toFixed(2)+" t":"0 t",c:"#0284c7",bg:"#f0f9ff"},
+          {l:"Total viajes",v:data.length,c:"#1a3fa4",bg:"#fce8eb"},
+          {l:"Tonelaje neto",v:totalNeto.toFixed(2)+" t",c:"#c0001a",bg:"#fce8eb"},
+          {l:"Prom / viaje",v:data.length?(totalNeto/data.length).toFixed(2)+" t":"0 t",c:"#0284c7",bg:"#e6ebf7"},
           {l:"Peajes totales",v:clp(data.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#64748b",bg:"#f8fafc"},
         ].map(({l,v,c})=>(
           <div key={l} className="mc">
@@ -582,7 +588,7 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
                   <tr key={i}>
                     <td style={{color:"#94a3b8",fontWeight:500}}>{i+1}</td>
                     <td>{excelToDate(r.fecha)}</td>
-                    <td style={{color:"#8b5cf6",fontWeight:600}}>{r.guia}</td>
+                    <td style={{color:"#1a3fa4",fontWeight:600}}>{r.guia}</td>
                     <td style={{fontWeight:500}}>{r.tracto}</td>
                     <td style={{fontWeight:500}}>{r.batea}</td>
                     <td style={{color:"#1e293b",fontWeight:500}}>{r.conductor}</td>
@@ -611,7 +617,7 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
 function Cfg({config,saveConf,scriptUrl,setSU,periodo,setP}){
   const [loc,setLoc]=useState({...config});
   const [nv,setNv]=useState({});
-  const campos=[["conductores","Conductores"],["tractosRampla","Tractos Rampla"],["ramplas","Ramplas (PPU)"],["tractosBatea","Tractos Batea"],["bateas","Bateas (PPU)"],["supervisores","Supervisores"],["equiposRampla","Equipos"]];
+  const campos=[["conductoresBatea","Conductores Batea"],["conductoresRampla","Conductores Rampla"],["tractosRampla","Tractos Rampla"],["ramplas","Ramplas (PPU)"],["tractosBatea","Tractos Batea"],["bateas","Bateas (PPU)"],["supervisores","Supervisores"],["equiposRampla","Equipos"]];
   const add=(k)=>{const v=(nv[k]||"").trim().toUpperCase();if(!v)return;if(!loc[k].includes(v))setLoc(p=>({...p,[k]:[...p[k],v]}));setNv(p=>({...p,[k]:""}));};
   const rm=(k,v)=>setLoc(p=>({...p,[k]:p[k].filter(x=>x!==v)}));
   return(
@@ -699,7 +705,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
       <div style={{display:"flex",gap:8,marginBottom:20,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
         <div style={{display:"flex",gap:6,background:"#fff",borderRadius:12,padding:5,boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
           {["🏆 Rankings","📅 Por fecha","📋 Resumen"].map((l,i)=>(
-            <button key={i} onClick={()=>setSubtab(i)} style={{background:subtab===i?"linear-gradient(135deg,#6366f1,#8b5cf6)":"none",color:subtab===i?"#fff":"#64748b",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all 0.2s",boxShadow:subtab===i?"0 2px 8px rgba(99,102,241,0.3)":"none"}}>{l}</button>
+            <button key={i} onClick={()=>setSubtab(i)} style={{background:subtab===i?"linear-gradient(135deg,#1a3fa4,#1a3fa4)":"none",color:subtab===i?"#fff":"#64748b",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all 0.2s",boxShadow:subtab===i?"0 2px 8px rgba(26,63,164,0.25)":"none"}}>{l}</button>
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -713,9 +719,9 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
         <div style={{display:"grid",gap:16}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
             {[
-              {l:"Top conductor bateas",v:bCond[0]?bCond[0][0].split(" ").slice(0,2).join(" "):"—",s:bCond[0]?bCond[0][1].n.toFixed(1)+" t":"",c:"#8b5cf6"},
-              {l:"Top unidad tracto+batea",v:bUnidad[0]?bUnidad[0][1].tracto+" / "+bUnidad[0][1].batea:"—",s:bUnidad[0]?bUnidad[0][1].n.toFixed(1)+" t":"",c:"#7c3aed"},
-              {l:"Top conductor ramplas",v:rCond[0]?rCond[0][0].split(" ").slice(0,2).join(" "):"—",s:rCond[0]?rCond[0][1].c+" vueltas":"",c:"#6366f1"},
+              {l:"Top conductor bateas",v:bCond[0]?bCond[0][0].split(" ").slice(0,2).join(" "):"—",s:bCond[0]?bCond[0][1].n.toFixed(1)+" t":"",c:"#1a3fa4"},
+              {l:"Top unidad tracto+batea",v:bUnidad[0]?bUnidad[0][1].tracto+" / "+bUnidad[0][1].batea:"—",s:bUnidad[0]?bUnidad[0][1].n.toFixed(1)+" t":"",c:"#c0001a"},
+              {l:"Top conductor ramplas",v:rCond[0]?rCond[0][0].split(" ").slice(0,2).join(" "):"—",s:rCond[0]?rCond[0][1].c+" vueltas":"",c:"#1a3fa4"},
               {l:"Unidades activas",v:bUnidad.length+rEquipo.length,s:"duplas en operación",c:"#0284c7"},
             ].map(({l,v,s,c})=>(
               <div key={l} className="mc">
@@ -730,8 +736,8 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
               <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>⛏ Conductores — Tonelaje</div>
               <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por neto transportado (t)</div>
               {bCond.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
-              {bCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBcond} col="#8b5cf6"/>)}
-              {bCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#8b5cf6"}}>{totalNeto.toFixed(2)} t</span></div>}
+              {bCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBcond} col="#1a3fa4"/>)}
+              {bCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#1a3fa4"}}>{totalNeto.toFixed(2)} t</span></div>}
             </div>
             <div className="card" style={{gridColumn:"span 2"}}>
               <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🚛 Unidades de transporte — Tracto + Batea</div>
@@ -747,10 +753,10 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
                           <span style={{fontSize:11,fontWeight:600,color:"#1e293b",display:"block",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v.tracto}</span>
                           <span style={{fontSize:10,color:"#94a3b8"}}>{v.batea}</span>
                         </div>
-                        <span style={{fontSize:12,fontWeight:700,color:"#7c3aed",flexShrink:0,marginLeft:8}}>{v.n.toFixed(2)} t</span>
+                        <span style={{fontSize:12,fontWeight:700,color:"#c0001a",flexShrink:0,marginLeft:8}}>{v.n.toFixed(2)} t</span>
                       </div>
                       <div style={{height:4,background:"#f1f5f9",borderRadius:2}}>
-                        <div style={{height:4,borderRadius:2,width:`${(v.n/maxBunidad)*100}%`,background:i===0?"linear-gradient(90deg,#7c3aed,#f59e0b)":i===1?"linear-gradient(90deg,#8b5cf6,#a78bfa)":"linear-gradient(90deg,#a78bfa88,#a78bfa44)"}}/>
+                        <div style={{height:4,borderRadius:2,width:`${(v.n/maxBunidad)*100}%`,background:i===0?"linear-gradient(90deg,#c0001a,#f59e0b)":i===1?"linear-gradient(90deg,#1a3fa4,#4a6fd4)":"linear-gradient(90deg,#4a6fd488,#4a6fd444)"}}/>
                       </div>
                       <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{v.c} viajes</div>
                     </div>
@@ -764,8 +770,8 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
               <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🚛 Conductores Rampla — Vueltas</div>
               <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por cantidad de vueltas realizadas</div>
               {rCond.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
-              {rCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.c} valLabel={v.c+" vueltas"} sub={clp(v.tot)} max={maxRcond} col="#6366f1"/>)}
-              {rCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#6366f1"}}>{ramplas.length} vueltas</span></div>}
+              {rCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.c} valLabel={v.c+" vueltas"} sub={clp(v.tot)} max={maxRcond} col="#1a3fa4"/>)}
+              {rCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#1a3fa4"}}>{ramplas.length} vueltas</span></div>}
             </div>
             <div className="card">
               <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🔩 Unidades Rampla — Tracto + Rampla</div>
@@ -786,10 +792,10 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                         <div><span style={{fontSize:11,fontWeight:600,color:"#1e293b",display:"block"}}>{v.tracto}</span><span style={{fontSize:10,color:"#94a3b8"}}>{v.rampla}</span></div>
-                        <span style={{fontSize:12,fontWeight:700,color:"#4f46e5"}}>{v.c} vueltas</span>
+                        <span style={{fontSize:12,fontWeight:700,color:"#1a3fa4"}}>{v.c} vueltas</span>
                       </div>
                       <div style={{height:4,background:"#f1f5f9",borderRadius:2}}>
-                        <div style={{height:4,borderRadius:2,width:`${(v.c/maxV)*100}%`,background:i===0?"linear-gradient(90deg,#4f46e5,#f59e0b)":"#818cf8"}}/>
+                        <div style={{height:4,borderRadius:2,width:`${(v.c/maxV)*100}%`,background:i===0?"linear-gradient(90deg,#1a3fa4,#f59e0b)":"#4a6fd4"}}/>
                       </div>
                       <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{clp(v.tot)}</div>
                     </div>
@@ -803,7 +809,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
 
       {subtab===1&&(
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          {[["b","⛏ Bateas por fecha",bateas,"#8b5cf6",true],["r","🚛 Ramplas por fecha",ramplas,"#6366f1",false]].map(([key,title,data,col,showN])=>{
+          {[["b","⛏ Bateas por fecha",bateas,"#1a3fa4",true],["r","🚛 Ramplas por fecha",ramplas,"#1a3fa4",false]].map(([key,title,data,col,showN])=>{
             const bd=byFecha(data,"neto");
             const totalC=bd.reduce((s,[,v])=>s+v.c,0),totalN=bd.reduce((s,[,v])=>s+v.n,0);
             return(
@@ -816,13 +822,13 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
                       <tr key={f}>
                         <td style={{fontWeight:500}}>{d.toLocaleDateString("es-CL")}</td>
                         <td style={{textAlign:"right",fontWeight:600,color:col}}>{v.c}</td>
-                        {showN&&<td style={{textAlign:"right",fontWeight:600,color:"#8b5cf6"}}>{v.n.toFixed(2)}</td>}
+                        {showN&&<td style={{textAlign:"right",fontWeight:600,color:"#1a3fa4"}}>{v.n.toFixed(2)}</td>}
                         {showN&&<td style={{textAlign:"right",color:"#94a3b8"}}>{totalN>0?((v.n/totalN)*100).toFixed(1)+"%":"—"}</td>}
                       </tr>
                     );})
                     }
                     {!bd.length&&<tr><td colSpan={4} style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</td></tr>}
-                    {bd.length>0&&<tr style={{background:"#f8fafc",fontWeight:700}}><td style={{color:"#1e293b"}}>TOTAL</td><td style={{textAlign:"right",color:col}}>{totalC}</td>{showN&&<td style={{textAlign:"right",color:"#8b5cf6"}}>{totalN.toFixed(2)}</td>}{showN&&<td style={{textAlign:"right",color:"#94a3b8"}}>100%</td>}</tr>}
+                    {bd.length>0&&<tr style={{background:"#f8fafc",fontWeight:700}}><td style={{color:"#1e293b"}}>TOTAL</td><td style={{textAlign:"right",color:col}}>{totalC}</td>{showN&&<td style={{textAlign:"right",color:"#1a3fa4"}}>{totalN.toFixed(2)}</td>}{showN&&<td style={{textAlign:"right",color:"#94a3b8"}}>100%</td>}</tr>}
                   </tbody>
                 </table>
               </div>
@@ -835,11 +841,11 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
         <div style={{display:"grid",gap:16}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
             {[
-              {l:"Total guías bateas",v:bateas.length,c:"#8b5cf6"},
-              {l:"Total tonelaje neto",v:totalNeto.toFixed(2)+" t",c:"#7c3aed"},
-              {l:"Promedio por viaje",v:bateas.length?(totalNeto/bateas.length).toFixed(2)+" t":"0 t",c:"#6d28d9"},
-              {l:"Total guías rampla",v:ramplas.length,c:"#6366f1"},
-              {l:"Total viáticos",v:clp(ramplas.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#4f46e5"},
+              {l:"Total guías bateas",v:bateas.length,c:"#1a3fa4"},
+              {l:"Total tonelaje neto",v:totalNeto.toFixed(2)+" t",c:"#c0001a"},
+              {l:"Promedio por viaje",v:bateas.length?(totalNeto/bateas.length).toFixed(2)+" t":"0 t",c:"#c0001a"},
+              {l:"Total guías rampla",v:ramplas.length,c:"#1a3fa4"},
+              {l:"Total viáticos",v:clp(ramplas.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#1a3fa4"},
               {l:"Total peajes (ambos)",v:clp([...ramplas,...bateas].reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#0284c7"},
             ].map(({l,v,c})=>(
               <div key={l} className="mc"><div className="mc-lbl">{l}</div><div style={{fontSize:20,fontWeight:700,color:c,margin:"6px 0 0",letterSpacing:"-0.3px"}}>{v}</div></div>
@@ -861,9 +867,9 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
                     <tr key={cond}>
                       <td style={{color:"#94a3b8",fontWeight:600}}>{medal(i)}</td>
                       <td style={{fontWeight:600,color:"#1e293b"}}>{cond}</td>
-                      <td style={{textAlign:"right",color:"#8b5cf6",fontWeight:600}}>{vj.length}</td>
+                      <td style={{textAlign:"right",color:"#1a3fa4",fontWeight:600}}>{vj.length}</td>
                       <td style={{textAlign:"right"}}>{vj.length?(bruto/vj.length).toFixed(2):"—"}</td>
-                      <td style={{textAlign:"right",fontWeight:700,color:"#7c3aed"}}>{neto.toFixed(2)}</td>
+                      <td style={{textAlign:"right",fontWeight:700,color:"#c0001a"}}>{neto.toFixed(2)}</td>
                       <td style={{textAlign:"right"}}>{vj.length?(neto/vj.length).toFixed(2):"—"}</td>
                       <td style={{textAlign:"right"}}>{netoPto.toFixed(2)}</td>
                       <td style={{textAlign:"right",color:dif<-0.1?"#ef4444":dif>0.1?"#10b981":"#94a3b8",fontWeight:600}}>{dif.toFixed(3)}</td>
@@ -876,8 +882,8 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
                 {bCond.length>0&&(
                   <tr style={{background:"#f8fafc",fontWeight:700,color:"#1e293b"}}>
                     <td></td><td>TOTAL</td>
-                    <td style={{textAlign:"right",color:"#8b5cf6"}}>{bateas.length}</td><td></td>
-                    <td style={{textAlign:"right",color:"#7c3aed"}}>{totalNeto.toFixed(2)}</td>
+                    <td style={{textAlign:"right",color:"#1a3fa4"}}>{bateas.length}</td><td></td>
+                    <td style={{textAlign:"right",color:"#c0001a"}}>{totalNeto.toFixed(2)}</td>
                     <td style={{textAlign:"right"}}>{bateas.length?(totalNeto/bateas.length).toFixed(2):"—"}</td>
                     <td style={{textAlign:"right"}}>{bateas.reduce((s,r)=>s+Number(r.netoPuerto||0),0).toFixed(2)}</td>
                     <td></td>
