@@ -718,7 +718,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
               {l:"Top conductor bateas",v:bCond[0]?bCond[0][0].split(" ").slice(0,2).join(" "):"—",s:bCond[0]?bCond[0][1].n.toFixed(1)+" t":"",c:"#8b5cf6"},
               {l:"Top unidad tracto+batea",v:bUnidad[0]?bUnidad[0][1].tracto+" / "+bUnidad[0][1].batea:"—",s:bUnidad[0]?bUnidad[0][1].n.toFixed(1)+" t":"",c:"#7c3aed"},
               {l:"Top conductor ramplas",v:rCond[0]?rCond[0][0].split(" ").slice(0,2).join(" "):"—",s:rCond[0]?rCond[0][1].c+" vueltas":"",c:"#6366f1"},
-              {l:"Equipos activos",v:bEquipo.length+rEquipo.length,s:"tractos en operación",c:"#0284c7"},
+              {l:"Unidades activas",v:bUnidad.length+rEquipo.length,s:"duplas en operación",c:"#0284c7"},
             ].map(({l,v,s,c})=>(
               <div key={l} className="mc">
                 <div className="mc-lbl">{l}</div>
