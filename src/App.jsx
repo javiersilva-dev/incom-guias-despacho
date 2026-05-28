@@ -75,6 +75,7 @@ export default function App(){
   const [fecha,setFecha]=useState(()=>{const a=new Date();a.setDate(a.getDate()-1);return a.toISOString().slice(0,10);});
   const [rows,setRows]=useState([]);
   const [n,setN]=useState("");
+  const [supGlobal,setSupGlobal]=useState("");
   const [dataLoaded,setDataLoaded]=useState(false);
 
   const toast2=(msg,t="ok")=>{setToast({msg,t});setTimeout(()=>setToast(null),3500);};
@@ -82,7 +83,37 @@ export default function App(){
 
   const call=useCallback(async(payload)=>{
     if(!scriptUrl){toast2("Falta URL del Apps Script","err");return null;}
-    // Usar GET con parámetros para evitar CORS (igual que otras apps INCOM)
+
+    if(payload.action==="save"){
+      // Enviar via formulario para evitar CORS — mismo método que otras apps INCOM
+      return new Promise((resolve)=>{
+        const form=document.createElement("form");
+        form.method="POST";
+        form.action=scriptUrl;
+        form.target="_blank_incom"; // iframe oculto
+        const inp=document.createElement("input");
+        inp.type="hidden";
+        inp.name="payload";
+        inp.value=JSON.stringify(payload);
+        form.appendChild(inp);
+        // iframe oculto para no abrir ventana
+        let iframe=document.getElementById("_incom_iframe");
+        if(!iframe){
+          iframe=document.createElement("iframe");
+          iframe.name="_blank_incom";
+          iframe.id="_incom_iframe";
+          iframe.style.display="none";
+          document.body.appendChild(iframe);
+        }
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        // Asumimos éxito tras 2s
+        setTimeout(()=>resolve({ok:true}),2000);
+      });
+    }
+
+    // Lectura: GET con parámetros (datos pequeños, sin problema)
     const params=new URLSearchParams({data:JSON.stringify(payload)});
     const r=await fetch(`${scriptUrl}?${params}`);
     return r.json();
@@ -129,16 +160,18 @@ export default function App(){
 
     const pl=getPlant(tipo);
     const fn=tipo==="rampla"?newRampla:newBatea;
-    setRows(Array.from({length:cnt},(_,i)=>fn(pl[i]||{})));
+    const filas=Array.from({length:cnt},(_,i)=>fn(pl[i]||{}));
+    // Aplicar supervisor global si está seleccionado
+    setRows(supGlobal ? filas.map(f=>({...f,supervisor:supGlobal})) : filas);
     setGuiasDuplicadas(new Set());
   };
 
   const confirmarIngresoDuplicado=()=>{
-    // Usuario confirmó que quiere ingresar igual
     setAvisoFecha(null);
     const pl=getPlant(tipo);
     const fn=tipo==="rampla"?newRampla:newBatea;
-    setRows(Array.from({length:parseInt(n)},(_,i)=>fn(pl[i]||{})));
+    const filas=Array.from({length:parseInt(n)},(_,i)=>fn(pl[i]||{}));
+    setRows(supGlobal ? filas.map(f=>({...f,supervisor:supGlobal})) : filas);
     setGuiasDuplicadas(new Set());
   };
 
@@ -408,6 +441,17 @@ export default function App(){
                     onChange={e=>{setFecha(e.target.value);setRows(prev=>prev.map(r=>({...r,fecha:toExcelDate(e.target.value)})));}} />
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <label style={{fontSize:13,color:"#64748b",fontWeight:500,whiteSpace:"nowrap"}}>Supervisor:</label>
+                  <select className="fi" value={supGlobal} style={{width:160}}
+                    onChange={e=>{
+                      setSupGlobal(e.target.value);
+                      setRows(prev=>prev.map(r=>({...r,supervisor:e.target.value})));
+                    }}>
+                    <option value="">— elegir</option>
+                    {config.supervisores.map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <input type="number" className="fi" min={1} max={60} placeholder="Cantidad" value={n}
                     style={{width:110}} onChange={e=>setN(e.target.value)} onKeyDown={e=>e.key==="Enter"&&prepararFilas()} />
                   <button className="btn-p" onClick={prepararFilas} style={{whiteSpace:"nowrap"}}>▶ Preparar filas</button>
@@ -584,7 +628,13 @@ function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
               {cols.map((col,ci)=>(
                 <td key={col.k} style={{padding:0}}>
                   {col.t==="ro"
-                    ?<div className="ci-ro">{row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toFixed(3):""}</div>
+                    ?<div className="ci-ro" style={{
+                        color: col.k==="difPuerto"
+                          ? (Number(row[col.k])>0.005?"#16a34a": Number(row[col.k])<-0.005?"#dc2626":"#1a3fa4")
+                          : "#1a3fa4"
+                      }}>
+                        {row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toFixed(3):""}
+                      </div>
                     :col.t==="dst"
                     ?<CeldaAC value={row[col.k]} opts={col.o().map(d=>d.nombre)} dataR={ri} dataC={ci}
                         onChange={v=>{
