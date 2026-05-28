@@ -276,6 +276,9 @@ export default function App(){
         .ci:focus{background:#e6ebf7;border-bottom:2px solid #1a3fa4;z-index:1;position:relative;}
         .ci-sel{width:100%;background:#fff;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1e293b;font-family:'Inter',sans-serif;font-size:12px;height:32px;padding:0 6px;outline:none;cursor:pointer;appearance:none;}
         .ci-sel:focus{background:#e6ebf7;border-bottom:2px solid #1a3fa4;}
+        .ci-ac{width:100%;background:#fff;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1e293b;font-family:'Inter',sans-serif;font-size:12px;height:32px;padding:0 6px;outline:none;}
+        .ci-ac:focus{background:#e6ebf7;border-bottom:2px solid #1a3fa4;}
+        .ci-ac::placeholder{color:#cbd5e1;}
         .ci-ro{width:100%;background:#f8fafc;border:none;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;color:#1a3fa4;font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;height:32px;font-weight:600;text-align:right;display:flex;align-items:center;justify-content:flex-end;}
         .ci-num{text-align:right;}
         .tr-e:hover .ci,.tr-e:hover .ci-sel,.tr-e:hover .ci-ro{background:#fafbff;}
@@ -514,6 +517,28 @@ export default function App(){
 }
 
 /* TABLA EDITABLE BATEAS */
+// Celda con autocompletado tipo datalist
+function CeldaAC({value,opts,onChange,onKeyDown,dataR,dataC,placeholder=""}){
+  const id=`dl-${dataR}-${dataC}`;
+  return(
+    <>
+      <input
+        className="ci-ac"
+        list={id}
+        value={value||""}
+        placeholder={placeholder}
+        data-r={dataR} data-c={dataC}
+        onChange={e=>onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        autoComplete="off"
+      />
+      <datalist id={id}>
+        {opts.map(o=><option key={o} value={o}/>)}
+      </datalist>
+    </>
+  );
+}
+
 function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
   const ref=useRef();
   const cols=[
@@ -550,9 +575,8 @@ function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
                   {col.t==="ro"
                     ?<div className="ci-ro">{row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toFixed(3):""}</div>
                     :col.t==="sel"
-                    ?<select className="ci-sel" value={row[col.k]||""} data-r={ri} data-c={ci} onChange={e=>upd(ri,col.k,e.target.value)} onKeyDown={e=>hk(e,ri,ci)}>
-                      <option value="">— elegir</option>{col.o().map(o=><option key={o}>{o}</option>)}
-                    </select>
+                    ?<CeldaAC value={row[col.k]} opts={col.o()} dataR={ri} dataC={ci}
+                        onChange={v=>upd(ri,col.k,v)} onKeyDown={e=>hk(e,ri,ci)}/>
                     :<input className={`ci${col.t==="num"?" ci-num":""}`} type={col.t==="num"?"number":"text"} step={col.t==="num"?"0.001":undefined}
                       value={row[col.k]||""} data-r={ri} data-c={ci} onChange={e=>upd(ri,col.k,e.target.value)} onKeyDown={e=>hk(e,ri,ci)}/>
                   }
@@ -610,9 +634,8 @@ function TblRamplas({rows,upd,del,cfg,duplicadas=new Set()}){
                   {col.t==="ro"
                     ?<div className="ci-ro">{row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toLocaleString("es-CL"):""}</div>
                     :col.t==="sel"
-                    ?<select className="ci-sel" value={row[col.k]||""} data-r={ri} data-c={ci} onChange={e=>upd(ri,col.k,e.target.value)} onKeyDown={e=>hk(e,ri,ci)}>
-                      <option value="">— elegir</option>{col.o().map(o=><option key={o}>{o}</option>)}
-                    </select>
+                    ?<CeldaAC value={row[col.k]} opts={col.o()} dataR={ri} dataC={ci}
+                        onChange={v=>upd(ri,col.k,v)} onKeyDown={e=>hk(e,ri,ci)}/>
                     :col.t==="date"
                     ?<input className="ci" type="date" data-r={ri} data-c={ci} onKeyDown={e=>hk(e,ri,ci)}
                       onChange={e=>upd(ri,col.k,e.target.value?toExcelDate(e.target.value):"")}/>
