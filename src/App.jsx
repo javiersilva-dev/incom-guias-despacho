@@ -108,7 +108,7 @@ export default function App(){
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
-        // Asumimos éxito tras 2s
+        // Asumimos éxito tras 2s y recargamos datos
         setTimeout(()=>resolve({ok:true}),2000);
       });
     }
@@ -197,8 +197,10 @@ export default function App(){
       savePlant(tipo,rows);
       const res=await call({action:"save",tipo,rows});
       if(res?.ok){
-        toast2(`${rows.length} guías guardadas ✓`);
-        setRows([]);setN("");setGuiasDuplicadas(new Set());fetchData();
+        toast2(`${rows.length} guías guardadas ✓ — actualizando...`);
+        setRows([]);setN("");setGuiasDuplicadas(new Set());
+        // Esperar 3s para que Apps Script procese y luego recargar
+        setTimeout(()=>fetchData(),3000);
       } else toast2(res?.msg||"Error","err");
     }catch{toast2("Error de conexión","err");}
     setSaving(false);
