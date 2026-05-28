@@ -97,12 +97,68 @@ export default function App(){
   const newBatea=(pl={})=>({fecha:toExcelDate(fecha),guia:"",tracto:pl.tracto||"",batea:pl.batea||"",conductor:pl.conductor||"",bruto:"",tara:"",neto:"",diferencia:"",dif:0,ticket:"",netoPuerto:"",difPuerto:0,origen:config.origenBatea,destino:config.destinoBatea,peajes:pl.peajes||config.peajeBatea,supervisor:pl.supervisor||config.supervisores[0]||"",revisadoPor:pl.revisadoPor||""});
   const newRampla=(pl={})=>({fecha:toExcelDate(fecha),guia:"",tracto:pl.tracto||"",rampla:pl.rampla||"",conductor:pl.conductor||"",producto:config.productoRampla,origen:config.origenRampla,destino:config.destinoRampla,bruto:"",tara:"",neto:"",paquetes:pl.paquetes||11,recepcionPuerto:"",llegadaTaller:"",viatico:pl.viatico||config.viatico,peajes:pl.peajes||config.peajeRampla,consumo:"",km:"",equipo:pl.equipo||"",supervisor:pl.supervisor||config.supervisores[0]||"",obs:""});
 
+  const [avisoFecha, setAvisoFecha] = useState(null);
+  const [guiasDuplicadas, setGuiasDuplicadas] = useState(new Set());
+
   const prepararFilas=()=>{
     const cnt=parseInt(n);
     if(!cnt||cnt<1||cnt>60){toast2("Entre 1 y 60","err");return;}
+
+    // VALIDACIÓN 1 — revisar si ya hay guías del mismo día y tipo
+    const fechaExcel=toExcelDate(fecha);
+    const dataActual=tipo==="rampla"?ramplas:bateas;
+    const guiasDelDia=dataActual.filter(r=>Number(r.fecha)===fechaExcel);
+    if(guiasDelDia.length>0){
+      setAvisoFecha({
+        fecha: new Date(fecha+"T12:00:00").toLocaleDateString("es-CL"),
+        tipo, cantidad: guiasDelDia.length,
+        guias: guiasDelDia.map(r=>r.guia).join(", ")
+      });
+      return; // No prepara filas hasta que el usuario confirme
+    }
+
     const pl=getPlant(tipo);
     const fn=tipo==="rampla"?newRampla:newBatea;
     setRows(Array.from({length:cnt},(_,i)=>fn(pl[i]||{})));
+    setGuiasDuplicadas(new Set());
+  };
+
+  const confirmarIngresoDuplicado=()=>{
+    // Usuario confirmó que quiere ingresar igual
+    setAvisoFecha(null);
+    const pl=getPlant(tipo);
+    const fn=tipo==="rampla"?newRampla:newBatea;
+    setRows(Array.from({length:parseInt(n)},(_,i)=>fn(pl[i]||{})));
+    setGuiasDuplicadas(new Set());
+  };
+
+  const guardar=async()=>{
+    if(!rows.length)return;
+
+    // VALIDACIÓN 2 — revisar N° de guía duplicado antes de guardar
+    const dataActual=tipo==="rampla"?ramplas:bateas;
+    const guiasExistentes=new Set(dataActual.map(r=>String(r.guia).trim()).filter(Boolean));
+    const duplicadas=new Set(rows.map((r,i)=>({guia:String(r.guia).trim(),i}))
+      .filter(({guia})=>guia&&guiasExistentes.has(guia))
+      .map(({i})=>i));
+
+    if(duplicadas.size>0){
+      setGuiasDuplicadas(duplicadas);
+      const nums=rows.filter((_,i)=>duplicadas.has(i)).map(r=>r.guia).join(", ");
+      toast2(`⚠️ Guías ya registradas: ${nums} — corrígelas antes de guardar`,"err");
+      return;
+    }
+
+    setSaving(true);
+    try{
+      savePlant(tipo,rows);
+      const res=await call({action:"save",tipo,rows});
+      if(res?.ok){
+        toast2(`${rows.length} guías guardadas ✓`);
+        setRows([]);setN("");setGuiasDuplicadas(new Set());fetchData();
+      } else toast2(res?.msg||"Error","err");
+    }catch{toast2("Error de conexión","err");}
+    setSaving(false);
   };
 
   const upd=(i,k,v)=>setRows(prev=>prev.map((r,idx)=>{
@@ -123,18 +179,6 @@ export default function App(){
     }
     return u;
   }));
-
-  const guardar=async()=>{
-    if(!rows.length)return;
-    setSaving(true);
-    try{
-      savePlant(tipo,rows);
-      const res=await call({action:"save",tipo,rows});
-      if(res?.ok){toast2(`${rows.length} guías guardadas ✓`);setRows([]);setN("");fetchData();}
-      else toast2(res?.msg||"Error","err");
-    }catch{toast2("Error de conexión","err");}
-    setSaving(false);
-  };
 
   const exportXLSX=(t)=>{
     const data=t==="rampla"?ramplas:bateas;
@@ -263,8 +307,8 @@ export default function App(){
 
         /* TIPO PILL */
         .pill{background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;color:#64748b;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
-        .pill.a-r{background:#e6ebf7;border-color:#1a3fa4;color:#1a3fa4;}
-        .pill.a-b{background:#fce8eb;border-color:#1a3fa4;color:#1a3fa4;}
+        .pill.a-r{background:#1a3fa4;border-color:#1a3fa4;color:#fff;}
+        .pill.a-b{background:#1a3fa4;border-color:#1a3fa4;color:#fff;}
 
         /* TABLA PRINCIPAL */
         .tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:500px;border-radius:12px;border:1px solid #e2e8f0;}
@@ -316,7 +360,7 @@ export default function App(){
           </div>
           <div style={{flex:1,display:"flex",justifyContent:"center"}}>
             <div className="tab-bar">
-              {[["＋","Ingreso"],["🚛","Ramplas"],["⛏","Bateas"],["⚙","Config"],["📊","Informes"]].map(([ic,lb],i)=>(
+              {[["＋","Ingreso"],["🚛","Ramplas"],["🚛","Bateas"],["⚙","Config"],["📊","Informes"]].map(([ic,lb],i)=>(
                 <button key={i} className={`tab-btn${tab===i?" active":""}`} onClick={()=>setTab(i)}>
                   <span>{ic}</span>{lb}
                 </button>
@@ -339,7 +383,7 @@ export default function App(){
             <div className="card" style={{padding:"16px 20px"}}>
               <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
                 <div style={{display:"flex",gap:8}}>
-                  {[["rampla","🚛 Rampla","a-r"],["batea","⛏ Batea","a-b"]].map(([k,l,c])=>(
+                  {[["rampla","🚛 Rampla","a-r"],["batea","🚛 Batea","a-b"]].map(([k,l,c])=>(
                     <button key={k} className={`pill${tipo===k?" "+c:""}`} onClick={()=>{setTipo(k);setRows([]);setN("");}}>
                       {l}
                     </button>
@@ -381,8 +425,8 @@ export default function App(){
             {rows.length>0&&(
               <div className="card" style={{padding:0,overflow:"hidden"}}>
                 {tipo==="batea"
-                  ?<TblBateas rows={rows} upd={upd} del={i=>setRows(p=>p.filter((_,x)=>x!==i))} cfg={config}/>
-                  :<TblRamplas rows={rows} upd={upd} del={i=>setRows(p=>p.filter((_,x)=>x!==i))} cfg={config}/>
+                  ?<TblBateas rows={rows} upd={upd} del={i=>setRows(p=>p.filter((_,x)=>x!==i))} cfg={config} duplicadas={guiasDuplicadas}/>
+                  :<TblRamplas rows={rows} upd={upd} del={i=>setRows(p=>p.filter((_,x)=>x!==i))} cfg={config} duplicadas={guiasDuplicadas}/>
                 }
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#f8fafc",borderTop:"1px solid #e2e8f0"}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#475569"}}>
@@ -434,13 +478,43 @@ export default function App(){
         {tab===4&&<Informes ramplas={ramplas} bateas={bateas} periodo={periodo} clp={clp} exportCSV={exportCSV} totalNeto={totalNeto}/>}
       </div>
 
+      {/* MODAL AVISO FECHA DUPLICADA */}
+      {avisoFecha&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{background:"#fff",borderRadius:16,padding:28,maxWidth:460,width:"90%",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"#fff3cd",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>⚠️</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:15,color:"#1e293b"}}>Guías ya registradas para este día</div>
+                <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>Posible duplicado detectado</div>
+              </div>
+            </div>
+            <div style={{background:"#fff8e1",border:"1px solid #ffd54f",borderRadius:8,padding:"12px 14px",marginBottom:20,fontSize:13,color:"#5f4a00"}}>
+              El <strong>{avisoFecha.fecha}</strong> ya tiene <strong>{avisoFecha.cantidad} guía{avisoFecha.cantidad>1?"s":""} de {avisoFecha.tipo}</strong> registrada{avisoFecha.cantidad>1?"s":""}:
+              <div style={{marginTop:6,fontFamily:"monospace",fontSize:12,color:"#1a3fa4",wordBreak:"break-all"}}>{avisoFecha.guias}</div>
+            </div>
+            <div style={{fontSize:13,color:"#64748b",marginBottom:20}}>
+              ¿Quieres continuar ingresando guías para ese día de todas formas?
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setAvisoFecha(null)} style={{background:"none",border:"1.5px solid #e2e8f0",borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:500,cursor:"pointer",color:"#64748b"}}>
+                Cancelar — cambiar fecha
+              </button>
+              <button onClick={confirmarIngresoDuplicado} style={{background:"#c0001a",border:"none",borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",color:"#fff"}}>
+                Sí, continuar de todas formas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast&&<div className={`toast ${toast.t==="err"?"t-err":"t-ok"}`}>{toast.msg}</div>}
     </div>
   );
 }
 
 /* TABLA EDITABLE BATEAS */
-function TblBateas({rows,upd,del,cfg}){
+function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
   const ref=useRef();
   const cols=[
     {k:"guia",      l:"N° Guía",    w:85,  t:"txt"},
@@ -469,7 +543,7 @@ function TblBateas({rows,upd,del,cfg}){
         </tr></thead>
         <tbody>
           {rows.map((row,ri)=>(
-            <tr key={ri} className="tr-e">
+            <tr key={ri} className="tr-e" style={{outline:duplicadas.has(ri)?"2px solid #c0001a":"none",outlineOffset:"-1px",background:duplicadas.has(ri)?"#fff0f0":""}}>
               <td className="rn">{ri+1}</td>
               {cols.map((col,ci)=>(
                 <td key={col.k} style={{padding:0}}>
@@ -496,7 +570,7 @@ function TblBateas({rows,upd,del,cfg}){
 }
 
 /* TABLA EDITABLE RAMPLAS */
-function TblRamplas({rows,upd,del,cfg}){
+function TblRamplas({rows,upd,del,cfg,duplicadas=new Set()}){
   const ref=useRef();
   const cols=[
     {k:"guia",           l:"N° Guía",    w:85,  t:"txt"},
@@ -560,19 +634,67 @@ function TblRamplas({rows,upd,del,cfg}){
 
 /* VISTA RAMPLAS */
 function VistaRamplas({data,exportCSV,clp,excelToDate}){
+  const [busq,setBusq]=useState("");
+  const [sortCol,setSortCol]=useState(null);
+  const [sortDir,setSortDir]=useState("desc");
+
+  const cols=[
+    {k:"fecha",l:"Fecha",fn:r=>Number(r.fecha||0)},
+    {k:"guia",l:"Guía",fn:r=>String(r.guia||"")},
+    {k:"tracto",l:"Tracto",fn:r=>String(r.tracto||"")},
+    {k:"rampla",l:"Rampla",fn:r=>String(r.rampla||"")},
+    {k:"conductor",l:"Conductor",fn:r=>String(r.conductor||"")},
+    {k:"paquetes",l:"Paq",fn:r=>Number(r.paquetes||0)},
+    {k:"bruto",l:"Bruto",fn:r=>Number(r.bruto||0)},
+    {k:"tara",l:"Tara",fn:r=>Number(r.tara||0)},
+    {k:"neto",l:"Neto",fn:r=>Number(r.neto||0)},
+    {k:"viatico",l:"Viático",fn:r=>Number(r.viatico||0)},
+    {k:"peajes",l:"Peajes",fn:r=>Number(r.peajes||0)},
+    {k:"total",l:"Total",fn:r=>Number(r.viatico||0)+Number(r.peajes||0)},
+    {k:"km",l:"KM",fn:r=>Number(r.km||0)},
+    {k:"equipo",l:"Equipo",fn:r=>String(r.equipo||"")},
+    {k:"supervisor",l:"Supervisor",fn:r=>String(r.supervisor||"")},
+  ];
+
+  const toggleSort=(k)=>{
+    if(sortCol===k) setSortDir(d=>d==="asc"?"desc":"asc");
+    else{ setSortCol(k); setSortDir("desc"); }
+  };
+
+  const colFn=cols.find(c=>c.k===sortCol)?.fn;
+  const filtered=data.filter(r=>{
+    if(!busq)return true;
+    const q=busq.toLowerCase();
+    return [r.guia,r.conductor,r.tracto,r.rampla,r.equipo,r.supervisor].some(v=>String(v||"").toLowerCase().includes(q));
+  });
+  const sorted=colFn ? [...filtered].sort((a,b)=>{
+    const va=colFn(a), vb=colFn(b);
+    return sortDir==="asc"?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  }) : filtered;
+
+  const SortIcon=({k})=>{
+    if(sortCol!==k) return <span style={{opacity:0.25,fontSize:9}}> ⇅</span>;
+    return <span style={{color:"#1a3fa4",fontSize:9}}>{sortDir==="asc"?" ↑":" ↓"}</span>;
+  };
+
   return(
     <div style={{display:"grid",gap:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🚛 Ramplas — {data.length} guías</div>
-        <button className="btn-s" onClick={()=>exportCSV("rampla")}>↓ Exportar XLSX</button>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🚛 Ramplas — {sorted.length}{sorted.length!==data.length?` de ${data.length}`:""} guías</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input className="fi" placeholder="🔍 Buscar conductor, guía, equipo..." value={busq}
+            onChange={e=>setBusq(e.target.value)} style={{width:260,padding:"7px 12px",fontSize:12}}/>
+          {busq&&<button className="btn-s" onClick={()=>setBusq("")} style={{padding:"6px 10px",fontSize:12}}>✕</button>}
+          <button className="btn-s" onClick={()=>exportCSV("rampla")}>↓ Exportar XLSX</button>
+        </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
-          {l:"Vueltas",v:data.length,c:"#1a3fa4",bg:"#e6ebf7"},
-          {l:"Viáticos",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#1a3fa4",bg:"#fce8eb"},
-          {l:"Peajes",v:clp(data.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#0284c7",bg:"#e6ebf7"},
-          {l:"Total General",v:clp(data.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0)),c:"#1a3fa4",bg:"#e6ebf7"},
-        ].map(({l,v,c,bg})=>(
+          {l:"Vueltas",v:sorted.length,c:"#1a3fa4"},
+          {l:"Viáticos",v:clp(sorted.reduce((s,r)=>s+Number(r.viatico||0),0)),c:"#1a3fa4"},
+          {l:"Peajes",v:clp(sorted.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#0284c7"},
+          {l:"Total General",v:clp(sorted.reduce((s,r)=>s+Number(r.viatico||0)+Number(r.peajes||0),0)),c:"#1a3fa4"},
+        ].map(({l,v,c})=>(
           <div key={l} className="mc">
             <div className="mc-lbl">{l}</div>
             <div className="mc-val" style={{color:c,fontSize:22}}>{v}</div>
@@ -580,11 +702,21 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
         ))}
       </div>
       <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <div className="tbl-wrap" style={{borderRadius:0,border:"none",maxHeight:500}}>
+        <div className="tbl-wrap" style={{borderRadius:0,border:"none",maxHeight:520}}>
           <table className="tbl-v">
-            <thead><tr>{["#","Fecha","Guía","Tracto","Rampla","Conductor","Paq","Bruto","Tara","Neto","Viático","Peajes","Total","KM","Equipo","Supervisor","Obs"].map(h=><th key={h}>{h}</th>)}</tr></thead>
+            <thead><tr>
+              <th style={{cursor:"default"}}>#</th>
+              {cols.map(c=>(
+                <th key={c.k} onClick={()=>toggleSort(c.k)}
+                  style={{cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",
+                    background:sortCol===c.k?"#dce6f5":"",color:sortCol===c.k?"#1a3fa4":""}}>
+                  {c.l}<SortIcon k={c.k}/>
+                </th>
+              ))}
+              <th>Obs</th>
+            </tr></thead>
             <tbody>
-              {data.map((r,i)=>(
+              {sorted.map((r,i)=>(
                 <tr key={i}>
                   <td style={{color:"#94a3b8",fontWeight:500}}>{i+1}</td>
                   <td>{excelToDate(r.fecha)}</td>
@@ -604,7 +736,9 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
                   <td style={{color:"#94a3b8",fontSize:11}}>{r.obs}</td>
                 </tr>
               ))}
-              {!data.length&&<tr><td colSpan={17} style={{textAlign:"center",padding:48,color:"#94a3b8"}}>Sin guías en el período</td></tr>}
+              {!sorted.length&&<tr><td colSpan={17} style={{textAlign:"center",padding:40,color:"#94a3b8"}}>
+                {busq?"No hay resultados para esa búsqueda":"Sin guías en el período"}
+              </td></tr>}
             </tbody>
           </table>
         </div>
@@ -615,18 +749,66 @@ function VistaRamplas({data,exportCSV,clp,excelToDate}){
 
 /* VISTA BATEAS */
 function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
+  const [busq,setBusq]=useState("");
+  const [sortCol,setSortCol]=useState(null);
+  const [sortDir,setSortDir]=useState("desc");
+
+  const cols=[
+    {k:"fecha",l:"Fecha",fn:r=>Number(r.fecha||0)},
+    {k:"guia",l:"Guía",fn:r=>String(r.guia||"")},
+    {k:"tracto",l:"PPU Tracto",fn:r=>String(r.tracto||"")},
+    {k:"batea",l:"PPU Batea",fn:r=>String(r.batea||"")},
+    {k:"conductor",l:"Conductor",fn:r=>String(r.conductor||"")},
+    {k:"bruto",l:"Bruto",fn:r=>Number(r.bruto||0)},
+    {k:"tara",l:"Tara",fn:r=>Number(r.tara||0)},
+    {k:"neto",l:"Neto",fn:r=>Number(r.neto||0)},
+    {k:"ticket",l:"N° Ticket",fn:r=>String(r.ticket||"")},
+    {k:"netoPuerto",l:"Neto Pto",fn:r=>Number(r.netoPuerto||0)},
+    {k:"difPuerto",l:"Dif. Pto",fn:r=>Number(r.difPuerto||0)},
+    {k:"peajes",l:"Peajes",fn:r=>Number(r.peajes||0)},
+    {k:"supervisor",l:"Supervisor",fn:r=>String(r.supervisor||"")},
+  ];
+
+  const toggleSort=(k)=>{
+    if(sortCol===k) setSortDir(d=>d==="asc"?"desc":"asc");
+    else{ setSortCol(k); setSortDir("desc"); }
+  };
+
+  const colFn=cols.find(c=>c.k===sortCol)?.fn;
+  const filtered=data.filter(r=>{
+    if(!busq)return true;
+    const q=busq.toLowerCase();
+    return [r.guia,r.conductor,r.tracto,r.batea,r.ticket,r.supervisor].some(v=>String(v||"").toLowerCase().includes(q));
+  });
+  const sorted=colFn?[...filtered].sort((a,b)=>{
+    const va=colFn(a),vb=colFn(b);
+    return sortDir==="asc"?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  }):filtered;
+
+  const netoFiltrado=sorted.reduce((s,r)=>s+Number(r.neto||0),0);
+
+  const SortIcon=({k})=>{
+    if(sortCol!==k)return <span style={{opacity:0.25,fontSize:9}}> ⇅</span>;
+    return <span style={{color:"#c0001a",fontSize:9}}>{sortDir==="asc"?" ↑":" ↓"}</span>;
+  };
+
   return(
     <div style={{display:"grid",gap:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>⛏ Bateas — {data.length} guías</div>
-        <button className="btn-s" onClick={()=>exportCSV("batea")}>↓ Exportar XLSX</button>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🚛 Bateas — {sorted.length}{sorted.length!==data.length?` de ${data.length}`:""} guías</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input className="fi" placeholder="🔍 Buscar conductor, guía, tracto, batea..." value={busq}
+            onChange={e=>setBusq(e.target.value)} style={{width:290,padding:"7px 12px",fontSize:12}}/>
+          {busq&&<button className="btn-s" onClick={()=>setBusq("")} style={{padding:"6px 10px",fontSize:12}}>✕</button>}
+          <button className="btn-s" onClick={()=>exportCSV("batea")}>↓ Exportar XLSX</button>
+        </div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
         {[
-          {l:"Total viajes",v:data.length,c:"#1a3fa4",bg:"#fce8eb"},
-          {l:"Tonelaje neto",v:totalNeto.toFixed(2)+" t",c:"#c0001a",bg:"#fce8eb"},
-          {l:"Prom / viaje",v:data.length?(totalNeto/data.length).toFixed(2)+" t":"0 t",c:"#0284c7",bg:"#e6ebf7"},
-          {l:"Peajes totales",v:clp(data.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#64748b",bg:"#f8fafc"},
+          {l:"Total viajes",v:sorted.length,c:"#1a3fa4"},
+          {l:"Tonelaje neto",v:netoFiltrado.toFixed(2)+" t",c:"#c0001a"},
+          {l:"Prom / viaje",v:sorted.length?(netoFiltrado/sorted.length).toFixed(2)+" t":"0 t",c:"#0284c7"},
+          {l:"Peajes totales",v:clp(sorted.reduce((s,r)=>s+Number(r.peajes||0),0)),c:"#64748b"},
         ].map(({l,v,c})=>(
           <div key={l} className="mc">
             <div className="mc-lbl">{l}</div>
@@ -634,12 +816,28 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
           </div>
         ))}
       </div>
+      {sortCol&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",background:"#e6ebf7",borderRadius:8,fontSize:12,color:"#1a3fa4",fontWeight:500}}>
+          <span>Ordenado por: <strong>{cols.find(c=>c.k===sortCol)?.l}</strong> {sortDir==="asc"?"↑ (menor a mayor)":"↓ (mayor a menor)"}</span>
+          <button onClick={()=>{setSortCol(null);setSortDir("desc");}} style={{background:"none",border:"none",cursor:"pointer",color:"#c0001a",fontSize:13,fontWeight:700,padding:"0 4px"}}>✕ Quitar orden</button>
+        </div>
+      )}
       <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <div className="tbl-wrap" style={{borderRadius:0,border:"none",maxHeight:500}}>
+        <div className="tbl-wrap" style={{borderRadius:0,border:"none",maxHeight:520}}>
           <table className="tbl-v">
-            <thead><tr>{["#","Fecha","Guía","PPU Tracto","PPU Batea","Conductor","Bruto","Tara","Neto","N° Ticket","Neto Pto","Dif. Pto","Peajes","Supervisor","Revisado"].map(h=><th key={h}>{h}</th>)}</tr></thead>
+            <thead><tr>
+              <th style={{cursor:"default"}}>#</th>
+              {cols.map(c=>(
+                <th key={c.k} onClick={()=>toggleSort(c.k)}
+                  style={{cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",
+                    background:sortCol===c.k?"#fce8eb":"",color:sortCol===c.k?"#c0001a":""}}>
+                  {c.l}<SortIcon k={c.k}/>
+                </th>
+              ))}
+              <th>Revisado</th>
+            </tr></thead>
             <tbody>
-              {data.map((r,i)=>{
+              {sorted.map((r,i)=>{
                 const dif=Number(r.difPuerto||0);
                 return(
                   <tr key={i}>
@@ -661,7 +859,9 @@ function VistaBateas({data,exportCSV,clp,excelToDate,totalNeto,n2,n3}){
                   </tr>
                 );
               })}
-              {!data.length&&<tr><td colSpan={15} style={{textAlign:"center",padding:48,color:"#94a3b8"}}>Sin guías en el período</td></tr>}
+              {!sorted.length&&<tr><td colSpan={15} style={{textAlign:"center",padding:40,color:"#94a3b8"}}>
+                {busq?"No hay resultados para esa búsqueda":"Sin guías en el período"}
+              </td></tr>}
             </tbody>
           </table>
         </div>
@@ -790,7 +990,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}}>
             <div className="card">
-              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>⛏ Conductores — Tonelaje</div>
+              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🚛 Conductores — Tonelaje</div>
               <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por neto transportado (t)</div>
               {bCond.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
               {bCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBcond} col="#1a3fa4"/>)}
@@ -866,7 +1066,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
 
       {subtab===1&&(
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          {[["b","⛏ Bateas por fecha",bateas,"#1a3fa4",true],["r","🚛 Ramplas por fecha",ramplas,"#1a3fa4",false]].map(([key,title,data,col,showN])=>{
+          {[["b","🚛 Bateas por fecha",bateas,"#1a3fa4",true],["r","🚛 Ramplas por fecha",ramplas,"#1a3fa4",false]].map(([key,title,data,col,showN])=>{
             const bd=byFecha(data,"neto");
             const totalC=bd.reduce((s,[,v])=>s+v.c,0),totalN=bd.reduce((s,[,v])=>s+v.n,0);
             return(
