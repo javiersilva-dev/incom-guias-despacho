@@ -82,20 +82,10 @@ export default function App(){
 
   const call=useCallback(async(payload)=>{
     if(!scriptUrl){toast2("Falta URL del Apps Script","err");return null;}
-    if(payload.action==="save"){
-      // POST con no-cors (igual que tus otras apps INCOM)
-      await fetch(scriptUrl,{
-        method:"POST",
-        mode:"no-cors",
-        body:JSON.stringify(payload)
-      });
-      return {ok:true}; // no-cors no permite leer la respuesta, asumimos éxito
-    } else {
-      // GET para leer datos — usando URL con parámetros
-      const params=new URLSearchParams({data:JSON.stringify(payload)});
-      const r=await fetch(`${scriptUrl}?${params}`);
-      return r.json();
-    }
+    // Usar GET con parámetros para evitar CORS (igual que otras apps INCOM)
+    const params=new URLSearchParams({data:JSON.stringify(payload)});
+    const r=await fetch(`${scriptUrl}?${params}`);
+    return r.json();
   },[scriptUrl]);
 
   const fetchData=useCallback(async()=>{
