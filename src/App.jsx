@@ -30,6 +30,14 @@ const DATOS_INICIALES_BATEAS = [
 
 const DEFAULT_CONFIG = {
   peajeRampla:41600, viatico:50000, peajeBatea:13800,
+  destinosRampla:[
+    {nombre:"ANGAMOS",     peaje:41600},
+    {nombre:"TOTORALILLO", peaje:41600},
+  ],
+  destinosBatea:[
+    {nombre:"TOTORALILLO", peaje:13800},
+    {nombre:"ANGAMOS",     peaje:13800},
+  ],
   conductoresBatea:["BRAYAN GUEVARA ALBORNOZ","DANIEL VEGA PEREIRA","ROBERTO FAJARDO SALINAS","CRISTIAN LANAS DIAZ","CRISTIAN OLIVARES ROJAS","LUIS MADARIAGA ALCOTA","JUAN VALENZUELA CASTRO","UBER ZAMORA MONARDES","RENE PAEZ REBOLLEDO","JOSE GONZALEZ GUEVARA","ABELINO CARRIZO VALLEJO","FRANCISCO HANSHING VEGA","RICARDO CONTRERAS PAEZ","JAVIER SANCHEZ SAAVEDRA","LUIS MUÑOZ ALMONACID","FELIPE CORTES ZEPEDA","JAVIER CORTES BRUNA","RICARDO RAMIREZ MIRANDA","EDUARDO LEDESMA LEDESMA","MARCO QUIROGA ESQUIVEL","ORLANDO BUGUEÑO RIVERA","ENRIQUE ROJAS GARCIA","BORIS ROJAS FLORES","PEDRO ARRIAGADA TAPIA","PEDRO SAEZ GONZALEZ","ALBERTO ASTORGA MONTAÑA","DAMM CRUZ GARRIDO","ROLANDO GUZMAN ACUÑA","JUAN MUÑOZ TIMBLE","WILFRIDO OLIVARES LEON","MARCO RIQUELME INOSTROZA","JOSE URIZAR ESCOBAR"],
   conductoresRampla:["BRAYAN GUEVARA ALBORNOZ","DANIEL VEGA PEREIRA","ROBERTO FAJARDO SALINAS","CRISTIAN LANAS DIAZ","CRISTIAN OLIVARES ROJAS","LUIS MADARIAGA ALCOTA","JUAN VALENZUELA CASTRO","UBER ZAMORA MONARDES","RENE PAEZ REBOLLEDO","JOSE GONZALEZ GUEVARA","ABELINO CARRIZO VALLEJO","FRANCISCO HANSHING VEGA","RICARDO CONTRERAS PAEZ","JAVIER SANCHEZ SAAVEDRA","LUIS MUÑOZ ALMONACID","FELIPE CORTES ZEPEDA","JAVIER CORTES BRUNA","RICARDO RAMIREZ MIRANDA","EDUARDO LEDESMA LEDESMA","MARCO QUIROGA ESQUIVEL","ORLANDO BUGUEÑO RIVERA","ENRIQUE ROJAS GARCIA","BORIS ROJAS FLORES","PEDRO ARRIAGADA TAPIA","PEDRO SAEZ GONZALEZ","ALBERTO ASTORGA MONTAÑA","DAMM CRUZ GARRIDO","ROLANDO GUZMAN ACUÑA","JUAN MUÑOZ TIMBLE","WILFRIDO OLIVARES LEON","MARCO RIQUELME INOSTROZA","JOSE URIZAR ESCOBAR"],
   tractosRampla:["SPSH74","SSHY46","RJBV35","RVFF14","RJBV34","RVFF13","RTRJ40"],
@@ -74,8 +82,20 @@ export default function App(){
 
   const call=useCallback(async(payload)=>{
     if(!scriptUrl){toast2("Falta URL del Apps Script","err");return null;}
-    const r=await fetch(scriptUrl,{method:"POST",body:JSON.stringify(payload)});
-    return r.json();
+    if(payload.action==="save"){
+      // POST con no-cors (igual que tus otras apps INCOM)
+      await fetch(scriptUrl,{
+        method:"POST",
+        mode:"no-cors",
+        body:JSON.stringify(payload)
+      });
+      return {ok:true}; // no-cors no permite leer la respuesta, asumimos éxito
+    } else {
+      // GET para leer datos — usando URL con parámetros
+      const params=new URLSearchParams({data:JSON.stringify(payload)});
+      const r=await fetch(`${scriptUrl}?${params}`);
+      return r.json();
+    }
   },[scriptUrl]);
 
   const fetchData=useCallback(async()=>{
@@ -546,6 +566,7 @@ function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
     {k:"tracto",    l:"PPU Tracto", w:100, t:"sel",o:()=>cfg.tractosBatea},
     {k:"batea",     l:"PPU Batea",  w:100, t:"sel",o:()=>cfg.bateas},
     {k:"conductor", l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductoresBatea},
+    {k:"destino",   l:"Destino",    w:115, t:"dst",o:()=>cfg.destinosBatea||[]},
     {k:"bruto",     l:"Bruto (t)",  w:80,  t:"num"},
     {k:"tara",      l:"Tara (t)",   w:75,  t:"num"},
     {k:"neto",      l:"Neto (t)",   w:75,  t:"ro"},
@@ -574,6 +595,13 @@ function TblBateas({rows,upd,del,cfg,duplicadas=new Set()}){
                 <td key={col.k} style={{padding:0}}>
                   {col.t==="ro"
                     ?<div className="ci-ro">{row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toFixed(3):""}</div>
+                    :col.t==="dst"
+                    ?<CeldaAC value={row[col.k]} opts={col.o().map(d=>d.nombre)} dataR={ri} dataC={ci}
+                        onChange={v=>{
+                          upd(ri,col.k,v);
+                          const dest=col.o().find(d=>d.nombre===v);
+                          if(dest) upd(ri,"peajes",dest.peaje);
+                        }} onKeyDown={e=>hk(e,ri,ci)}/>
                     :col.t==="sel"
                     ?<CeldaAC value={row[col.k]} opts={col.o()} dataR={ri} dataC={ci}
                         onChange={v=>upd(ri,col.k,v)} onKeyDown={e=>hk(e,ri,ci)}/>
@@ -601,6 +629,7 @@ function TblRamplas({rows,upd,del,cfg,duplicadas=new Set()}){
     {k:"tracto",         l:"Tracto",     w:90,  t:"sel",o:()=>cfg.tractosRampla},
     {k:"rampla",         l:"Rampla",     w:90,  t:"sel",o:()=>cfg.ramplas},
     {k:"conductor",      l:"Conductor",  w:175, t:"sel",o:()=>cfg.conductoresRampla},
+    {k:"destino",        l:"Destino",    w:115, t:"dst",o:()=>cfg.destinosRampla||[]},
     {k:"bruto",          l:"Bruto (kg)", w:85,  t:"num"},
     {k:"tara",           l:"Tara (kg)",  w:80,  t:"num"},
     {k:"neto",           l:"Neto (kg)",  w:80,  t:"ro"},
@@ -633,6 +662,13 @@ function TblRamplas({rows,upd,del,cfg,duplicadas=new Set()}){
                 <td key={col.k} style={{padding:0}}>
                   {col.t==="ro"
                     ?<div className="ci-ro">{row[col.k]!==undefined&&row[col.k]!==""?Number(row[col.k]).toLocaleString("es-CL"):""}</div>
+                    :col.t==="dst"
+                    ?<CeldaAC value={row[col.k]} opts={col.o().map(d=>d.nombre)} dataR={ri} dataC={ci}
+                        onChange={v=>{
+                          upd(ri,col.k,v);
+                          const dest=col.o().find(d=>d.nombre===v);
+                          if(dest) upd(ri,"peajes",dest.peaje);
+                        }} onKeyDown={e=>hk(e,ri,ci)}/>
                     :col.t==="sel"
                     ?<CeldaAC value={row[col.k]} opts={col.o()} dataR={ri} dataC={ci}
                         onChange={v=>upd(ri,col.k,v)} onKeyDown={e=>hk(e,ri,ci)}/>
@@ -898,6 +934,16 @@ function Cfg({config,saveConf,scriptUrl,setSU,periodo,setP}){
   const [loc,setLoc]=useState({...config});
   const [nv,setNv]=useState({});
   const campos=[["conductoresBatea","Conductores Batea"],["conductoresRampla","Conductores Rampla"],["tractosRampla","Tractos Rampla"],["ramplas","Ramplas (PPU)"],["tractosBatea","Tractos Batea"],["bateas","Bateas (PPU)"],["supervisores","Supervisores"],["equiposRampla","Equipos"]];
+  const [newDstR,setNewDstR]=useState({nombre:"",peaje:""});
+  const [newDstB,setNewDstB]=useState({nombre:"",peaje:""});
+  const addDst=(tipo,val,setter)=>{
+    if(!val.nombre.trim()||!val.peaje)return;
+    const key=tipo==="rampla"?"destinosRampla":"destinosBatea";
+    if(!loc[key].find(d=>d.nombre===val.nombre.toUpperCase()))
+      setLoc(p=>({...p,[key]:[...p[key],{nombre:val.nombre.toUpperCase(),peaje:Number(val.peaje)}]}));
+    setter({nombre:"",peaje:""});
+  };
+  const rmDst=(key,nombre)=>setLoc(p=>({...p,[key]:p[key].filter(d=>d.nombre!==nombre)}));
   const add=(k)=>{const v=(nv[k]||"").trim().toUpperCase();if(!v)return;if(!loc[k].includes(v))setLoc(p=>({...p,[k]:[...p[k],v]}));setNv(p=>({...p,[k]:""}));};
   const rm=(k,v)=>setLoc(p=>({...p,[k]:p[k].filter(x=>x!==v)}));
   return(
@@ -933,6 +979,64 @@ function Cfg({config,saveConf,scriptUrl,setSU,periodo,setP}){
           </div>
         </div>
       ))}
+      {/* DESTINOS RAMPLA */}
+      <div className="card">
+        <div className="section-lbl">Destinos Rampla — con peaje</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 140px auto",gap:8,marginBottom:12,alignItems:"end"}}>
+          <div>
+            <label style={{fontSize:12,color:"#64748b",fontWeight:500,display:"block",marginBottom:4}}>Nombre destino</label>
+            <input className="fi" placeholder="Ej: ANGAMOS" value={newDstR.nombre}
+              onChange={e=>setNewDstR(p=>({...p,nombre:e.target.value.toUpperCase()}))}/>
+          </div>
+          <div>
+            <label style={{fontSize:12,color:"#64748b",fontWeight:500,display:"block",marginBottom:4}}>Peaje $</label>
+            <input className="fi" type="number" placeholder="41600" value={newDstR.peaje}
+              onChange={e=>setNewDstR(p=>({...p,peaje:e.target.value}))}/>
+          </div>
+          <button className="btn-p" onClick={()=>addDst("rampla",newDstR,setNewDstR)} style={{padding:"9px 14px"}}>＋</button>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {(loc.destinosRampla||[]).map(d=>(
+            <div key={d.nombre} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",background:"#e6ebf7",border:"1px solid #c0d0f0",borderRadius:8}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:"#1a3fa4"}}>{d.nombre}</div>
+                <div style={{fontSize:11,color:"#64748b"}}>${Number(d.peaje).toLocaleString("es-CL")}</div>
+              </div>
+              <button onClick={()=>rmDst("destinosRampla",d.nombre)} style={{background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:14}}>×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* DESTINOS BATEA */}
+      <div className="card">
+        <div className="section-lbl">Destinos Batea — con peaje</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 140px auto",gap:8,marginBottom:12,alignItems:"end"}}>
+          <div>
+            <label style={{fontSize:12,color:"#64748b",fontWeight:500,display:"block",marginBottom:4}}>Nombre destino</label>
+            <input className="fi" placeholder="Ej: TOTORALILLO" value={newDstB.nombre}
+              onChange={e=>setNewDstB(p=>({...p,nombre:e.target.value.toUpperCase()}))}/>
+          </div>
+          <div>
+            <label style={{fontSize:12,color:"#64748b",fontWeight:500,display:"block",marginBottom:4}}>Peaje $</label>
+            <input className="fi" type="number" placeholder="13800" value={newDstB.peaje}
+              onChange={e=>setNewDstB(p=>({...p,peaje:e.target.value}))}/>
+          </div>
+          <button className="btn-p" onClick={()=>addDst("batea",newDstB,setNewDstB)} style={{padding:"9px 14px"}}>＋</button>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {(loc.destinosBatea||[]).map(d=>(
+            <div key={d.nombre} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",background:"#fce8eb",border:"1px solid #f0c0c8",borderRadius:8}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:600,color:"#c0001a"}}>{d.nombre}</div>
+                <div style={{fontSize:11,color:"#64748b"}}>${Number(d.peaje).toLocaleString("es-CL")}</div>
+              </div>
+              <button onClick={()=>rmDst("destinosBatea",d.nombre)} style={{background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:14}}>×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{display:"flex",justifyContent:"flex-end"}}>
         <button className="btn-p" onClick={()=>saveConf(loc)}>💾 Guardar configuración</button>
       </div>
