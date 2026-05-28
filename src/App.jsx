@@ -119,16 +119,29 @@ export default function App(){
     return r.json();
   },[scriptUrl]);
 
+  const callGet=useCallback((payload)=>{
+    return new Promise((resolve,reject)=>{
+      const cbName="incom_cb_"+Date.now();
+      const script=document.createElement("script");
+      const params=new URLSearchParams({data:JSON.stringify(payload),callback:cbName});
+      script.src=`${scriptUrl}?${params}`;
+      script.onerror=()=>{ delete window[cbName]; document.head.removeChild(script); reject(new Error("JSONP error")); };
+      window[cbName]=(data)=>{ delete window[cbName]; document.head.removeChild(script); resolve(data); };
+      document.head.appendChild(script);
+      setTimeout(()=>{ if(window[cbName]){ delete window[cbName]; try{document.head.removeChild(script);}catch{} reject(new Error("Timeout")); } },15000);
+    });
+  },[scriptUrl]);
+
   const fetchData=useCallback(async()=>{
     if(!scriptUrl)return;
     setLoading(true);
     try{
-      const res=await call({action:"getAll",periodo});
-      if(res?.bateas?.length){setBateas(res.bateas);setDataLoaded(true);}
-      if(res?.ramplas?.length) setRamplas(res.ramplas);
-    }catch{toast2("Error al cargar","err");}
+      const res=await callGet({action:"getAll",periodo});
+      if(res?.bateas) setBateas(res.bateas);
+      if(res?.ramplas) setRamplas(res.ramplas);
+    }catch(e){toast2("Error al cargar datos","err");console.error(e);}
     setLoading(false);
-  },[scriptUrl,periodo,call]);
+  },[scriptUrl,periodo,callGet]);
 
   useEffect(()=>{fetchData();},[fetchData]);
 
