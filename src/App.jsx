@@ -661,12 +661,22 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
   const [subtab,setSubtab]=useState(0);
   const byKey=(arr,key,nk)=>{const m={};arr.forEach(r=>{const k=r[key]||"Sin asignar";if(!m[k])m[k]={c:0,n:0,tot:0,peajes:0};m[k].c++;m[k].n+=Number(r[nk]||0);m[k].tot+=Number(r.viatico||0)+Number(r.peajes||0);m[k].peajes+=Number(r.peajes||0);});return m;};
   const bCond=Object.entries(byKey(bateas,"conductor","neto")).sort((a,b)=>b[1].n-a[1].n);
-  const bEquipo=Object.entries(byKey(bateas,"tracto","neto")).sort((a,b)=>b[1].n-a[1].n);
-  const bBatea=Object.entries(byKey(bateas,"batea","neto")).sort((a,b)=>b[1].n-a[1].n);
   const rCond=Object.entries(byKey(ramplas,"conductor","neto")).sort((a,b)=>b[1].c-a[1].c);
   const rEquipo=Object.entries(byKey(ramplas,"tracto","neto")).sort((a,b)=>b[1].c-a[1].c);
-  const maxBcond=bCond[0]?.[1]?.n||1,maxBequip=bEquipo[0]?.[1]?.n||1,maxBbatea=bBatea[0]?.[1]?.n||1;
   const maxRcond=rCond[0]?.[1]?.c||1,maxRequip=rEquipo[0]?.[1]?.c||1;
+
+  // Ranking combinado TRACTO+BATEA (la unidad real de transporte)
+  const bUnidad=(()=>{
+    const m={};
+    bateas.forEach(r=>{
+      const k=`${r.tracto||"?"} + ${r.batea||"?"}`;
+      if(!m[k])m[k]={tracto:r.tracto,batea:r.batea,c:0,n:0,peajes:0};
+      m[k].c++; m[k].n+=Number(r.neto||0); m[k].peajes+=Number(r.peajes||0);
+    });
+    return Object.entries(m).sort((a,b)=>b[1].n-a[1].n);
+  })();
+  const maxBcond=bCond[0]?.[1]?.n||1;
+  const maxBunidad=bUnidad[0]?.[1]?.n||1;
   const byFecha=(arr,nk)=>Object.entries(arr.reduce((m,r)=>{const f=r.fecha||0;if(!m[f])m[f]={c:0,n:0};m[f].c++;m[f].n+=Number(r[nk]||0);return m;},{})).sort();
   const medal=(i)=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}°`;
 
@@ -706,7 +716,7 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
             {[
               {l:"Top conductor bateas",v:bCond[0]?bCond[0][0].split(" ").slice(0,2).join(" "):"—",s:bCond[0]?bCond[0][1].n.toFixed(1)+" t":"",c:"#8b5cf6"},
-              {l:"Top tracto bateas",v:bEquipo[0]?bEquipo[0][0]:"—",s:bEquipo[0]?bEquipo[0][1].n.toFixed(1)+" t":"",c:"#7c3aed"},
+              {l:"Top unidad tracto+batea",v:bUnidad[0]?bUnidad[0][1].tracto+" / "+bUnidad[0][1].batea:"—",s:bUnidad[0]?bUnidad[0][1].n.toFixed(1)+" t":"",c:"#7c3aed"},
               {l:"Top conductor ramplas",v:rCond[0]?rCond[0][0].split(" ").slice(0,2).join(" "):"—",s:rCond[0]?rCond[0][1].c+" vueltas":"",c:"#6366f1"},
               {l:"Equipos activos",v:bEquipo.length+rEquipo.length,s:"tractos en operación",c:"#0284c7"},
             ].map(({l,v,s,c})=>(
@@ -725,17 +735,30 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
               {bCond.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBcond} col="#8b5cf6"/>)}
               {bCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#8b5cf6"}}>{totalNeto.toFixed(2)} t</span></div>}
             </div>
-            <div className="card">
-              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🚛 Tractos Batea — Tonelaje</div>
-              <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por neto transportado (t)</div>
-              {bEquipo.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
-              {bEquipo.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBequip} col="#7c3aed"/>)}
-            </div>
-            <div className="card">
-              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>📦 Bateas (PPU) — Tonelaje</div>
-              <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por neto transportado (t)</div>
-              {bBatea.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
-              {bBatea.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.n} valLabel={v.n.toFixed(2)+" t"} sub={v.c+" viajes"} max={maxBbatea} col="#6d28d9"/>)}
+            <div className="card" style={{gridColumn:"span 2"}}>
+              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🚛 Unidades de transporte — Tracto + Batea</div>
+              <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por neto transportado · la dupla que más carga mueve</div>
+              {bUnidad.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 24px"}}>
+                {bUnidad.map(([key,v],i)=>(
+                  <div key={key} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    <div style={{width:28,textAlign:"center",fontSize:i<3?15:11,fontWeight:700,color:i<3?["#f59e0b","#94a3b8","#cd7c3c"][i]:"#cbd5e1",flexShrink:0}}>{medal(i)}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:3,alignItems:"baseline"}}>
+                        <div style={{minWidth:0}}>
+                          <span style={{fontSize:11,fontWeight:600,color:"#1e293b",display:"block",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{v.tracto}</span>
+                          <span style={{fontSize:10,color:"#94a3b8"}}>{v.batea}</span>
+                        </div>
+                        <span style={{fontSize:12,fontWeight:700,color:"#7c3aed",flexShrink:0,marginLeft:8}}>{v.n.toFixed(2)} t</span>
+                      </div>
+                      <div style={{height:4,background:"#f1f5f9",borderRadius:2}}>
+                        <div style={{height:4,borderRadius:2,width:`${(v.n/maxBunidad)*100}%`,background:i===0?"linear-gradient(90deg,#7c3aed,#f59e0b)":i===1?"linear-gradient(90deg,#8b5cf6,#a78bfa)":"linear-gradient(90deg,#a78bfa88,#a78bfa44)"}}/>
+                      </div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{v.c} viajes</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
@@ -747,10 +770,34 @@ function Informes({ramplas,bateas,periodo,clp,exportCSV,totalNeto}){
               {rCond.length>0&&<div style={{paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:700,color:"#1e293b"}}><span>TOTAL</span><span style={{color:"#6366f1"}}>{ramplas.length} vueltas</span></div>}
             </div>
             <div className="card">
-              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🔩 Tractos Rampla — Vueltas</div>
-              <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por cantidad de vueltas por tracto</div>
-              {rEquipo.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>}
-              {rEquipo.map(([c,v],i)=><RankBar key={c} pos={i} label={c} val={v.c} valLabel={v.c+" vueltas"} sub={clp(v.tot)} max={maxRequip} col="#4f46e5"/>)}
+              <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:4}}>🔩 Unidades Rampla — Tracto + Rampla</div>
+              <div style={{fontSize:11,color:"#94a3b8",marginBottom:14}}>Ranking por vueltas realizadas como dupla</div>
+              {(()=>{
+                const m={};
+                ramplas.forEach(r=>{
+                  const k=`${r.tracto||"?"} + ${r.rampla||"?"}`;
+                  if(!m[k])m[k]={tracto:r.tracto,rampla:r.rampla,c:0,tot:0};
+                  m[k].c++; m[k].tot+=Number(r.viatico||0)+Number(r.peajes||0);
+                });
+                const sorted=Object.entries(m).sort((a,b)=>b[1].c-a[1].c);
+                const maxV=sorted[0]?.[1]?.c||1;
+                if(!sorted.length) return <div style={{textAlign:"center",color:"#94a3b8",padding:20,fontSize:12}}>Sin datos</div>;
+                return sorted.map(([key,v],i)=>(
+                  <div key={key} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
+                    <div style={{width:28,textAlign:"center",fontSize:i<3?15:11,fontWeight:700,color:i<3?["#f59e0b","#94a3b8","#cd7c3c"][i]:"#cbd5e1",flexShrink:0}}>{medal(i)}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                        <div><span style={{fontSize:11,fontWeight:600,color:"#1e293b",display:"block"}}>{v.tracto}</span><span style={{fontSize:10,color:"#94a3b8"}}>{v.rampla}</span></div>
+                        <span style={{fontSize:12,fontWeight:700,color:"#4f46e5"}}>{v.c} vueltas</span>
+                      </div>
+                      <div style={{height:4,background:"#f1f5f9",borderRadius:2}}>
+                        <div style={{height:4,borderRadius:2,width:`${(v.c/maxV)*100}%`,background:i===0?"linear-gradient(90deg,#4f46e5,#f59e0b)":"#818cf8"}}/>
+                      </div>
+                      <div style={{fontSize:10,color:"#94a3b8",marginTop:2}}>{clp(v.tot)}</div>
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
